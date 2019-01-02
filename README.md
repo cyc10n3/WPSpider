@@ -19,7 +19,7 @@ A centralised dashboard for running and scheduling WordPress scans powered by wp
 * npm install (for installing node modules or dependencies)
 * npm start
 * Open https://localhost:1337 in browser
-* Login with default credentials (admin/admin)
+* Login with default credentials (admin/admin). It is highly recommended to change the login password by going through server.js file.
 ```
 
 ## Screenshots
