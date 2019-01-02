@@ -1,24 +1,14 @@
-# WPScan-Web-Interface
+# WPScan_Web_Interface
 Scan WordPress websites for security issues.
 
 ## Key Features
 
 ```
-* Cross-platform application
 * Provides centralized security dashboard for WordPress security scans
 * Perform scan for single or multiple WordPress applications asynchronously
 * View scan history and reports
 * Supports both on demand and scheduled scans
-```
-
-## Security Features
-
-```
-* Authentication and Authorization checks have been implemented to prevent unauthorized access to the
-  application and its services.
-* Only requests with valid http/https URL are accepted
-* Restricted file upload- Only text files with max-file size 2 MB are processed
-* User will be automatically logged-out after 1 hour of inactivity
+* Cross-platform application
 ```
 
 ## How to Setup?
