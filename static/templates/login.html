@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Login Page</title>
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <style type="text/css">
+    body {
+        background-image: url('img/page-background.jpeg');
+        /* Full height */
+        height: 100%;
+        /* Center and scale the image nicely */
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+    .box {
+        width: 500px;
+        margin: 100px 0;
+    }
+
+    .shape1 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        float: left;
+        margin-right: -50px;
+    }
+
+    .shape2 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        margin-top: -30px;
+        float: left;
+    }
+
+    .shape3 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        margin-top: -30px;
+        float: left;
+        margin-left: -31px;
+    }
+
+    .shape4 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        margin-top: -25px;
+        float: left;
+        margin-left: -32px;
+    }
+
+    .shape5 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        float: left;
+        margin-right: -48px;
+        margin-left: -32px;
+        margin-top: -30px;
+    }
+
+    .shape6 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        float: left;
+        margin-right: -20px;
+        margin-top: -35px;
+    }
+
+    .shape7 {
+        position: relative;
+        height: 150px;
+        width: 150px;
+        background-color: #000;
+        border-radius: 80px;
+        float: left;
+        margin-right: -20px;
+        margin-top: -57px;
+    }
+
+    .float {
+        position: absolute;
+        z-index: 2;
+    }
+
+    .form {
+        margin-left: 145px;
+    }
+
+    .page-footer {
+        position: relative;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        margin-bottom: 0px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="jumbotron text-center" style="background-color: #000;">
+            <h1 style="color: gray; font-family: fantasy; line-height: 1; font-size: 4rem">WPScan- Web Interface</h1>
+        </div>
+        <div id="login-row" class="row justify-content-center align-items-center">
+            <div id="login-column" class="col-md-6">
+                <div class="box">
+                    <div class="shape1"></div>
+                    <div class="shape2"></div>
+                    <div class="shape3"></div>
+                    <div class="shape4"></div>
+                    <div class="shape5"></div>
+                    <div class="shape6"></div>
+                    <div class="shape7"></div>
+                    <div class="float">
+                        <form class="form" action="/login" method="POST" autocomplete="off">
+                            <div class="form-group">
+                                <label for="username" class="text-white">Username:</label><br>
+                                <input type="text" name="username" id="username" class="form-control" autofocus="true">
+                            </div>
+                            <div class="form-group">
+                                <label for="password" class="text-white">Password:</label><br>
+                                <input type="password" name="password" id="password" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" name="submit" class="btn btn-primary btn-md" value="Login">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <footer class="page-footer text-center">
+            <!-- Copyright -->
+            <div class="footer-copyright py-3">© 2019 Copyright:
+                <a href="http://www.gauravmishra.co.in/" target="_blank"> gauravmishra.co.in</a>
+            </div>
+            <!-- Copyright -->
+        </footer>
+        <!-- Footer -->
+    </div>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+</body>
+
+</html>

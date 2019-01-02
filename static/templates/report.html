@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Scan Report</title>
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <style type="text/css">
+    @media print {
+
+        .link-logout,
+        footer,
+        .print-button {
+            display: none;
+        }
+    }
+
+    @page {
+        size: auto;
+        margin: 0mm;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.25em !important;
+        word-break: break-word;
+    }
+
+    .vuln-list {
+        margin-top: 3rem;
+    }
+
+    .vuln-list thead {
+        background-color: black;
+        color: white;
+        font-weight: bold;
+    }
+
+    body {
+        background-image: url('/img/page-background.jpeg');
+        /* Full height */
+        height: 100%;
+        /* Center and scale the image nicely */
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+    body .container,
+    #reportContainer {
+        font-family: monospace;
+    }
+
+    .blog-info {
+        font-size: 1.2rem;
+        font-weight: bold;
+        padding: 1rem 0.5rem;
+        margin-bottom: 1rem;
+        border-radius: 10px;
+    }
+
+    .link-logout {
+        position: relative;
+        float: right;
+        top: 5px;
+        right: 10px;
+        color: #0074d9;
+        background-color: #fff;
+        padding: 5px;
+        border-radius: 5px;
+        font-family: sans-serif;
+    }
+
+    .link-logout:hover {
+        color: #fff;
+        background-color: #0074d9;
+        text-decoration: none;
+    }
+
+    .page-footer {
+        position: relative;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        margin-bottom: 0px;
+    }
+    </style>
+</head>
+
+<body>
+    <script type="text/x-handlebars-template" id="report-template">
+        <div class="container">
+        <a href="/logout" class="link-logout"><img src="/img/logout.png" width="25" height="25">Log Out</a>
+        <h1 class='text-center' style="font-weight: bold">Scan Report</h1>
+        <div class="blog-info jumbotron text-center">
+            <table class="table table-borderless table-condensed">
+                <tr>
+                    <td class='text-left'>Application URL</td>
+                    <td class='text-left'>{{target_url}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Wordpress Version</td>
+                    <td class='text-left'>{{version.number}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Status</td>
+                    <td class='text-left text-capitalize'>{{version.status}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Theme</td>
+                    <td class='text-left text-capitalize'>{{main_theme.slug}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Scanner</td>
+                    <td class='text-left'>WPScan- {{banner.version}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Start Time</td>
+                    <td class='text-left'>{{prettifyDate start_time}}</td>
+                </tr>
+                <tr>
+                    <td class='text-left'>Stop Time</td>
+                    <td class='text-left'>{{prettifyDate stop_time}}</td>
+                </tr>
+            </table>
+        </div>
+        <a href="#" class="float-right" onclick="document.title='Scan Report- {{getHostname target_url}}_'+new Date();window.print();">
+                <img class="float-right print-button" src="/img/print.jpg" height="20%" width="20%">
+        </a>
+        <table class="table table-hover vuln-list">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Module</th>
+                    <th scope="col">Vulnerability</th>
+                    <th scope="col">Fixed In</th>
+                    <th scope="col">References</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {{#if version.vulnerabilities.length}}
+                    {{#each version.vulnerabilities}}
+                        <tr>
+                            <th scope="row" style="width:2%" class="align-middle">{{counter}}</th>
+                            <td style="width:15%" class="align-middle">Wordpress Version</td>
+                            <td style="width:35%" class="align-middle">{{this.title}}</td>
+                            <td style="width:8%" class="align-middle">{{this.fixed_in}}</td>
+                            {{#if this.references.url.length}}
+                                <td style="width:40%" class="align-middle">
+                                    {{#each this.references.url}}
+                                        <a href={{this}} target="_blank">{{this}}</a><br>
+                                    {{/each}}
+                                </td>
+                            {{/if}}
+                        </tr>
+                    {{/each}}
+                {{/if}}
+                {{#if main_theme.vulnerabilities.length}}
+                    {{#each main_theme.vulnerabilities}}
+                        <tr>
+                            <th scope="row" style="width:4%">{{counter}}</th>
+                            <td style="width:15%">Theme</td>
+                            <td style="width:35%">{{this.title}}</td>
+                            <td style="width:8%">{{this.fixed_in}}</td>
+                            {{#if this.references.url.length}}
+                                <td style="width:45%">
+                                    {{#each this.references.url}}
+                                        <a href={{this}} target="_blank">{{this}}</a><br>
+                                    {{/each}}
+                                </td>
+                            {{/if}}
+                        </tr>
+                    {{/each}}
+                {{/if}}
+                    {{#each plugins}}
+                        {{#each this.vulnerabilities}}
+                            <tr>
+                                <th scope="row" style="width:4%">{{counter}}</th>
+                                <td style="width:15%">Plugin</td>
+                                <td style="width:35%">{{this.title}}</td>
+                                <td style="width:8%">{{../this.latest_version}}</td>
+                                <td style="width:45%">
+                                        <a href={{../this.location}} target="_blank">{{../this.location}}</a><br>
+                                </td>
+                            </tr>
+                        {{/each}}
+                    {{/each}}
+            </tbody>
+        </table>
+        </div>
+    </script>
+    <div id='reportContainer'></div>
+    <!-- Footer -->
+    <footer class="page-footer text-center">
+        <!-- Copyright -->
+        <div class="footer-copyright py-3">© 2019 Copyright:
+            <a href="http://www.gauravmishra.co.in/" target="_blank"> gauravmishra.co.in</a>
+        </div>
+        <!-- Copyright -->
+    </footer>
+    <!-- Footer -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/handlebars.min.js"></script>
+    <script type="text/javascript">
+    var count = 1;
+    Handlebars.registerHelper("counter", function() {
+        return count++;
+    });
+    Handlebars.registerHelper("prettifyDate", function(timestamp) {
+        return new Date(timestamp * 1000).toString('yyyy-MM-dd')
+    });
+    Handlebars.registerHelper('getHostname', function(url) {
+        var url_parts = url.split('/');
+        var domain_name_parts = url_parts[2].split(':');
+        var domain_name = domain_name_parts[0];
+        return domain_name;
+    });
+    var url = new URL(location.href);
+    var filename = url.search.substring(1).split('=')[1]
+    $.ajax({
+        url: "/report?file=" + filename,
+        type: "GET",
+        success: function(data, textStatus, xhr) {
+            if ($.isPlainObject(data)) {
+                var source = document.getElementById('report-template').innerHTML;
+                var template = Handlebars.compile(source);
+                var html = template(data);
+                $('#reportContainer').html(html);
+            } else {
+                window.location = "/";
+            }
+        },
+        error: function(err) {
+            console.log(err)
+        }
+    })
+    </script>
+</body>
+
+</html>

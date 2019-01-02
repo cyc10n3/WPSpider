@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>WPScan- Web Interface</title>
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/pagination.css">
+    <style type="text/css">
+    body {
+        background-image: url('/img/page-background.jpeg');
+        height: 100%;
+        /* Center and scale the image nicely */
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+    body a {
+        text-decoration: none !impo;
+        color: #428BCA;
+    }
+
+    body a:hover,
+    a:focus {
+        color: #2A6496;
+        text-decoration: none;
+    }
+
+    body #scanHistory,
+    body #scanScheduler,
+    body #scheduleHistory {
+        font-family: monospace;
+    }
+
+    body #scanHistory h2,
+    body #scheduleHistory h2 {
+        font-weight: bold;
+    }
+
+    body #scanStatus {
+        font-weight: bold;
+
+    }
+
+    #scanScheduler .col-sm-2 {
+        padding-left: 0%;
+    }
+
+    input[name='scanUrl'] {
+        width: 20%;
+    }
+
+    .scan-history thead,
+    .schedule-history thead {
+        background-color: black;
+        color: white;
+        font-weight: bold;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.25em !important;
+        word-break: break-word;
+    }
+
+    #scanUrl {
+        display: inline-block !important;
+        width: 50%;
+        vertical-align: middle;
+        padding: 5px;
+        border-radius: 0.5rem;
+        outline: none;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px white inset;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="file"]:focus {
+        border-color: rgba(100, 100, 100, 0.8);
+        box-shadow: 0 0 0 30px white inset;
+        -webkit-box-shadow: 0 0 0 30px white inset;
+        outline: 0 none;
+    }
+
+    #nav a {
+        color: black;
+        float: left;
+        padding: 8px 16px;
+        text-decoration: none;
+    }
+
+    #nav {
+        display: inline-block;
+    }
+
+    #nav a.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    #nav a:hover:not(.active) {
+        background-color: #ddd;
+    }
+
+    .link-logout {
+        position: relative;
+        top: 5px;
+        float: right;
+        right: 10px;
+        color: #0074d9;
+        background-color: #fff;
+        padding: 5px;
+        border-radius: 5px;
+    }
+
+    .link-logout:hover {
+        color: #fff;
+        background-color: #0074d9;
+    }
+
+    .view-report:visited {
+        color: #FFF;
+    }
+
+    .page-footer {
+        position: relative;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        margin-bottom: 0px;
+    }
+
+    .pagination-container-1,
+    .pagination-container-2 {
+        text-align: center;
+    }
+
+    .paginationjs {
+        display: inline-block;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/logout" class="link-logout"><img src="/img/logout.png" width="25" height="25">Log Out</a>
+        <div class="jumbotron text-center" style="background-color: #000;">
+            <h1 style="color: gray; font-family: fantasy; line-height: 1; font-size: 4rem">WPScan- Dashboard</h1>
+        </div>
+        <form id="scanApplication" method="POST" class="text-center form-group" autocomplete="off">
+            <input type="url" id="scanUrl" name="scanUrl" placeholder="Enter a URL to Scan" class="form-control">&nbsp;or
+            <span class="d-inline-block" style="width: 20%; max-width: 30%; word-break: break-word;">
+                <input type="file" class="form-control-file" name="url_list" id="urlList" accept="text/plain" title="Choose a text file">
+            </span>
+            <input type="submit" value="Start Scan" class="btn btn-primary">
+        </form>
+        <div id="scanStatus" class="text-center">
+        </div>
+        <div id="scanHistory" class="text-center">
+        </div>
+        <div class="pagination-container-1"></div>
+        <br>
+        <form id="scanScheduler" method="POST" class="form-group" autocomplete="off">
+            <h2 class="text-center font-weight-bold">Schedule Scan</h2>
+            <div class="row">
+                <div class="col-sm-2">
+                    <label for="second" class="font-weight-bold">Second (optional)</label>
+                    <input type="text" name="second" id="second" class="form-control">
+                </div>
+                <div class="col-sm-2">
+                    <label for="minute" class="font-weight-bold">Minute</label>
+                    <input type="text" required name="minute" id="minute" class="form-control">
+                </div>
+                <div class="col-sm-2">
+                    <label for="hour" class="font-weight-bold">Hour</label>
+                    <input type="text" required name="hour" id="hour" class="form-control">
+                </div>
+                <div class="col-sm-2">
+                    <label for="day" class="font-weight-bold">Day</label>
+                    <input type="text" required name="day" id="day" class="form-control">
+                </div>
+                <div class="col-sm-2">
+                    <label for="dayOfMonth" class="font-weight-bold">Day of Month</label>
+                    <input type="text" required name="dayOfMonth" id="dayOfMonth" class="form-control">
+                </div>
+                <div class="col-sm-2">
+                    <label for="dayOfWeek" class="font-weight-bold">Day of Week</label>
+                    <input type="text" required name="dayOfWeek" id="dayOfWeek" class="form-control">
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <input type="url" id="scheduleUrl" name="scheduleUrl" required placeholder="Enter a URL" class="form-control col-sm-6">
+            </div>
+            <br>
+            <div class="row">
+                <input type="submit" value="Schedule Scan" class="btn btn-primary col-sm-2">
+            </div>
+            <br>
+            <div class="error-message d-none alert alert-danger">
+            </div>
+            <div class="success-message d-none alert alert-primary">
+            </div>
+        </form>
+        <div id="scheduleHistory" class="text-center"></div>
+        <div class="pagination-container-2"></div>
+        <script type="text/x-handlebars-template" id="scan-history-template">
+            {{#if scan_history.length}}
+                <h2>Scan History</h2>
+                <table class="table table-hover scan-history">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Hostname</th>
+                            <th scope="col">Start Time</th>
+                            <th scope="col">Report</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each scan_history}}
+                            <tr>
+                                <th scope="row" style="width:5%" class="align-middle">{{scanHistoryCounter}}</th>
+                                <td style="width:35%" class="align-middle">{{hostname}}</td>
+                                <td style="width:35%" class="align-middle">{{prettifyDate timestamp}}</td>
+                                <td style="width:25%" class="align-middle">
+                                    <a href="templates/report.html?file={{filename}}" target="_blank" class="btn btn-success view-report">View</a>
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            {{/if}}
+        </script>
+        <script type="text/x-handlebars-template" id="schedule-history-template">
+            {{#if scheduled_scans.length}}
+                <h2>Scheduled Scan History</h2>
+                <table class="table table-hover schedule-history">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Hostname</th>
+                            <th scope="col">Start Time</th>
+                            <th scope="col">Rule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each scheduled_scans}}
+                            <tr>
+                                <th scope="row" style="width:5%" class="align-middle">{{scheduleHistoryCounter}}</th>
+                                <td style="width:35%" class="align-middle">{{hostname}}</td>
+                                <td style="width:25%" class="align-middle">{{prettifyDate startTime}}</td>
+                                <td style="width:35%" class="align-middle">{{rule}}</td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            {{/if}}
+        </script>
+    </div>
+    <!-- Footer -->
+    <footer class="page-footer text-center">
+        <!-- Copyright -->
+        <div class="footer-copyright py-3">© 2019 Copyright:
+            <a href="http://www.gauravmishra.co.in/" target="_blank"> gauravmishra.co.in</a>
+        </div>
+        <!-- Copyright -->
+    </footer>
+    <!-- Footer -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/handlebars.min.js"></script>
+    <script type="text/javascript" src="/js/pagination.min.js"></script>
+    <script type="text/javascript">
+    //var scanHistoryCount = 1;
+    //var scheduleHistoryCount = 1;
+    Handlebars.registerHelper("scanHistoryCounter", function() {
+        return scanHistoryCount++;
+    });
+    Handlebars.registerHelper("scheduleHistoryCounter", function() {
+        return scheduleHistoryCount++;
+    });
+    Handlebars.registerHelper("prettifyDate", function(timestamp) {
+        return new Date(timestamp).toString('yyyy-MM-dd')
+    });
+
+    $("#urlList").on("change", function() {
+
+        if (this.files[0].size > 0 && $("#scanUrl").val() !== "") {
+            $("#scanApplication").find("input[type=url], input[type=file]").val("");
+            $("#scanStatus").text("Please supply ethier a URL or a file");
+        } else if (this.files[0].size > 2097152) {
+            $("#scanApplication").find("input[type=file]").val("");
+            $("#scanStatus").text("File size should not exceed 2 MB.");
+        } else if (this.files[0].size < 2097152 && $("#scanUrl").val() == "") {
+            $("#scanStatus").text("");
+        }
+
+
+    });
+    $("#scanUrl").on('keyup', function() {
+
+        var exp = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+
+        if (this.value !== "" && $("#urlList").val() !== "") {
+            $("#scanApplication").find("input[type=url], input[type=file]").val("");
+            $("#scanStatus").text("Please supply ethier a URL or a file");
+        } else if ((this.value.match(exp)) && $("#urlList").val() == "") {
+            $("#scanStatus").text("");
+        }
+
+    });
+
+    $("#scanApplication").submit(function(evt) {
+        evt.preventDefault();
+        if ($("#scanUrl").val() !== "" && $("#urlList").val() !== "") {
+            $("#scanStatus").text("Please supply ethier a URL or a file");
+            $("#scanApplication").find("input[type=url], input[type=text]").val("");
+        } else if ($("#scanUrl").val() !== "" || $("#urlList").val() !== "") {
+            $.ajax({
+                url: "/scan",
+                type: "POST",
+                data: new FormData($("#scanApplication")[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function() {
+                    if ($("#scanUrl").val() !== "" && $("#urlList").val() === "") {
+                        $("#scanStatus").html("<span>Scanning started. Please wait, this may take several minutes to complete...</span><img style='padding-bottom: 10px; height: 2%; width: 2%;' src='img/ajax_loader_gray_32.gif'>");
+                    }
+                },
+                success: function(res) {
+                    $("#scanStatus").html(res);
+                    fetchScanHistory();
+                },
+                error: function(err) {
+                    $("#scanStatus").html("It's taking time for scan to complete. Scan history will be updated automatically <br>once the scan is complete.");
+                }
+            });
+            $("#scanApplication").find("input[type=url], input[type=text]").val("");
+        } else {
+            $("#scanStatus").text("Please supply an input.");
+        }
+    });
+
+    $("#scanScheduler").submit(function(evt) {
+        evt.preventDefault();
+        var ajaxData = $('#scanScheduler').serialize();
+        $.ajax({
+            url: "/schedule",
+            type: "POST",
+            data: ajaxData,
+            beforeSend: function() {
+
+            },
+            success: function(res) {
+                res = JSON.parse(res);
+                if (res.statusCode == 0 || res.statusCode == 200 || res.statusCode == 300 || res.statusCode == 400 || res.statusCode == 500) {
+                    $('#scanScheduler .error-message').html(res.message);
+                    $('#scanScheduler .success-message').addClass('d-none');
+                    $('#scanScheduler .error-message').removeClass('d-none');
+
+                } else if (res.statusCode == 100) {
+                    $('#scanScheduler .success-message').html(res.message);
+                    $('#scanScheduler .error-message').addClass('d-none');
+                    $('#scanScheduler .success-message').removeClass('d-none');
+                }
+                $("#scanScheduler").find("input[type=url], input[type=text]").val("");
+            }
+        });
+    });
+
+    function fetchScanHistory() {
+        scanHistoryCount = 1;
+        $.ajax({
+            url: "/fetch/scan/history",
+            type: "GET",
+            success: function(data) {
+                var source = document.getElementById('scan-history-template').innerHTML;
+                var template = Handlebars.compile(source);
+                if (data.scan_history.length === 0) {
+                    $('.pagination-container-1').hide();
+                } else {
+                    data.scan_history.reverse();
+                    $('.pagination-container-1').pagination({
+                        dataSource: data.scan_history,
+                        pageSize: 10,
+                        showGoInput: true,
+                        showGoButton: true,
+                        callback: function(data, pagination) {
+                            var obj = {};
+                            scanHistoryCount = 1 + pagination.pageNumber * 10 - pagination.pageSize;
+                            obj.scan_history = data;
+                            var html = template(obj);
+                            $('#scanHistory').html(html);
+                        }
+                    });
+                    $('.pagination-container-1').show();
+                }
+
+            },
+            error: function(err) {
+                console.log("Error: " + err);
+            }
+        });
+    }
+
+    function scheduledHistory() {
+        scheduleHistoryCount = 1;
+        $.ajax({
+            url: "/fetch/scheduled/history",
+            type: "GET",
+            success: function(data) {
+                var source = document.getElementById('schedule-history-template').innerHTML;
+                var template = Handlebars.compile(source);
+                if (data.scheduled_scans.length === 0) {
+                    $('.pagination-container-2').hide();
+                } else {
+                    data.scheduled_scans.reverse();
+                    $('.pagination-container-2').pagination({
+                        dataSource: data.scheduled_scans,
+                        pageSize: 10,
+                        showGoInput: true,
+                        showGoButton: true,
+                        callback: function(data, pagination) {
+                            var obj = {};
+                            scheduleHistoryCount = 1 + pagination.pageNumber * 10 - pagination.pageSize;
+                            obj.scheduled_scans = data;
+                            var html = template(obj);
+                            $('#scheduleHistory').html(html);
+                        }
+                    });
+                    $('.pagination-container-2').show();
+                }
+            },
+            error: function(err) {
+                console.log("Error fetching scheduled scan history");
+            }
+        });
+    }
+    $("document").ready(function() {
+        fetchScanHistory();
+        setInterval(fetchScanHistory, 120000);
+        scheduledHistory();
+        setInterval(scheduledHistory, 120000);
+    });
+    $("document").on('click', '.reset', function() {
+        $(this).closest('form').find("input[type=text], textarea").val("");
+    });
+    </script>
+</body>
+
+</html>
