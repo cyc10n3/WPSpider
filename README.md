@@ -40,7 +40,7 @@ A centralised dashboard for running and scheduling WordPress scans powered by wp
 ## Known Issues
 
 ```
-* Hardcoded login-credentials/secret.
+* Hardcoded login-credentials/secret
 * Login Bruteforce and
 * CSRF
 ```
