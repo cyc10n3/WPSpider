@@ -1,5 +1,5 @@
 # WPScan Web Interface
-Scan WordPress websites/blogs for security issues.
+A centralised dashboard for running and scheduling WordPress scans powered by wpscan.
 
 ## Key Features
 
