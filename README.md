@@ -21,7 +21,7 @@ A centralised dashboard for running and scheduling WordPress scans powered by wp
 * Open https://localhost:1337 in browser
 * Login with default credentials (admin/cyc10n3)
 ```
-![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `It is highly recommended to change the login password by modifying server.js`[`file`](https://github.com/cyc10n3/WPScan_Web_Interface/blob/master/server.js#L93).
+![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `It is recommended to change the login password by modifying config.json`[`file`](https://github.com/cyc10n3/WPScan_Web_Interface/blob/master/config.json).
 
 ## Screenshots
 
@@ -40,7 +40,6 @@ A centralised dashboard for running and scheduling WordPress scans powered by wp
 ## Known Issues
 
 ```
-* Hardcoded login-credentials/secret
 * Login Bruteforce and
 * CSRF
 ```
