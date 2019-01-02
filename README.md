@@ -29,10 +29,10 @@ Scan WordPress websites/blogs for security issues.
 #### Login
 ![Login](/static/screenshots/1.png?raw=true "Login")
 
-#### On-demand Scan
+#### Dashboard: On-demand Scan
 ![Dashboard: On-demand Scan](/static/screenshots/2.png?raw=true "Dashboard: On-demand Scan")
 
-#### Schedule Scan
+#### Dashboard: Schedule Scan
 ![Dashboard: Schedule Scan](/static/screenshots/3.png?raw=true "Dashboard: Schedule Scan")
 
 #### Scan Report
