@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2018-12-31 12:38:43
+ * @Last Modified time: 2019-01-02 23:32:37
  */
 
 var express = require('express'); // Application Framework
@@ -49,11 +49,14 @@ server.listen(1337, function() {
 });
 
 app.use(cookieParser());
+
+var appConfig = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+
 // initialize express-session to allow us track the logged-in user across sessions.
 var hour = 3600000;
 app.use(session({
     key: 'user_sid',
-    secret: 'Af*Vzgz(A48MnsurTDzCg*[$',
+    secret: appConfig.session_secret,
     resave: true,
     saveUninitialized: true,
     rolling: true,
@@ -90,7 +93,7 @@ app.route('/login')
     .post((req, res) => {
         var username = req.body.username,
             password = req.body.password;
-        if (username === "admin" && password === "admin") {
+        if (username === appConfig.login_creds.username && password === appConfig.login_creds.password) {
             req.session.user = username;
             res.redirect('/main');
         } else {
