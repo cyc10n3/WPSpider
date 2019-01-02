@@ -37,6 +37,14 @@ A centralised dashboard for running and scheduling WordPress scans powered by wp
 #### Scan Report
 ![Scan Report](/static/screenshots/4.png?raw=true "Scan Report")
 
+## Known Issues
+
+```
+* Hardcoded login-credentials/secret.
+* Login Bruteforce and
+* CSRF
+```
+
 ## Authors
 
 * **Gaurav Mishra** - *Initial work* - gmishra010@gmail.com
