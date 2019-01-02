@@ -26,7 +26,7 @@ Scan WordPress websites for security issues.
 ```
 * Download and Install Node.js- https://nodejs.org/en/download/
 * Install wpscan- https://wpscan.org/
-* git clone https://github.expedia.biz/gaumishra/WPScan-Web-Interface.git
+* git clone https://github.com/cyc10n3/WPScan_Web_Interface.git
 * cd  WPScan-Web-Interface
 * npm install (for installing node modules or dependencies)
 * npm start
