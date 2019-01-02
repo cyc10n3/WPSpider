@@ -53,7 +53,7 @@ app.use(cookieParser());
 var hour = 3600000;
 app.use(session({
     key: 'user_sid',
-    secret: 'cyc10n3',
+    secret: 'Af*Vzgz(A48MnsurTDzCg*[$',
     resave: true,
     saveUninitialized: true,
     rolling: true,
