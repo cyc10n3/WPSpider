@@ -41,7 +41,7 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 
 ```
 * Login Bruteforce and
-* CSRF
+* Cross-Site Request Forgery
 ```
 
 ## Authors
