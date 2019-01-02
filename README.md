@@ -7,7 +7,7 @@ Scan WordPress websites/blogs for security issues.
 * Provides centralized security dashboard for WordPress security scans
 * Performs scan for single or multiple WordPress applications asynchronously
 * View scan history and reports
-* Supports both on demand and scheduled scans
+* Supports both on demand and scheduled scans (like a cron job)
 * Cross-platform application
 ```
 
