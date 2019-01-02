@@ -1,4 +1,4 @@
-# WPScan_Web_Interface
+# WPScan Web Interface
 Scan WordPress websites for security issues.
 
 ## Key Features
