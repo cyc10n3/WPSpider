@@ -35,7 +35,7 @@ Scan WordPress websites for security issues.
 ```
 ## Authors
 
-* **Gaurav Mishra** - *Initial work* - gaumishra@expediagroup.com
+* **Gaurav Mishra** - *Initial work* - gmishra010@gmail.com
 
 ## License
 
