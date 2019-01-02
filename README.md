@@ -1,5 +1,5 @@
 # WPScan Web Interface
-A centralised dashboard for running and scheduling WordPress scans powered by wpscan. It has the ability to show scan history and result in user-friendly format.
+A centralized dashboard for running and scheduling WordPress scans powered by wpscan. It has the ability to show scan history and result in user-friendly format.
 
 ## Key Features
 
