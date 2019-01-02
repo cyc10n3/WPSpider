@@ -1,5 +1,5 @@
 {
-  "name": "wpscan-web-interface",
+  "name": "WPScan_Web_Interface",
   "version": "1.0.0",
   "description": "Scan WordPress websites for security issues.",
   "main": "server.js",
