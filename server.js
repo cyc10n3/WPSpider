@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-03 15:44:09
+ * @Last Modified time: 2019-01-03 17:38:39
  */
 
 var express = require('express'); // Application Framework
@@ -46,12 +46,12 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(cookieParser());
 app.use(csrf({ cookie: true }));
-app.use(function (err, req, res, next) {
-  if (err.code !== 'EBADCSRFTOKEN') return next(err);
+app.use(function(err, req, res, next) {
+    if (err.code !== 'EBADCSRFTOKEN') return next(err);
 
-  // handle CSRF token errors here
-  res.status(403);
-  res.send('Invalid CSRF Token. Please refresh the page.');
+    // handle CSRF token errors here
+    res.status(403);
+    res.send('Invalid CSRF Token. Please refresh the page.');
 })
 
 server.listen(1337, function() {
@@ -173,7 +173,7 @@ app.post('/scan', function(req, res) {
             }
             // When URL is supplied as an input
             else if (fields.scanUrl.toString().trim() !== "" && files.url_list[0].size === 0) {
-                if (validUrl.isUri(fields.scanUrl.toString().trim())) {
+                if (validUrl.isHttpUri(fields.scanUrl.toString().trim()) || validUrl.isHttpsUri(fields.scanUrl.toString().trim())) {
                     try {
                         var scanUrl = url.parse(fields.scanUrl.toString().trim(), true);
                         startSingleScan(scanUrl, res).then(function(result) {
@@ -199,7 +199,7 @@ app.post('/scan', function(req, res) {
                     var urlList = data.split('\n');
                     var promises = [];
                     for (var i = 0; i < urlList.length; i++) {
-                        if (validUrl.isUri(urlList[i])) {
+                        if (validUrl.isHttpUri(urlList[i]) || validUrl.isHttpsUri(urlList[i])) {
                             var urlStr = url.parse(urlList[i], true);
                             promises.push(startScan(urlStr, res));
                         }
@@ -233,7 +233,7 @@ function startSingleScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
@@ -241,8 +241,16 @@ function startSingleScan(scanUrl, res) {
         child = exec(cmd, null, function(error, stderr, stdout) {
             var resultObj = JSON.parse(fs.readFileSync("./data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted != undefined) {
+                console.log("Scan failed for: " + scanUrl.hostname);
+                try {
+                    fs.unlink("./data/scan_results/" + filename, (err) => {
+                        if (err) throw err;
+                    });
+                } catch (err) {
+
+                }
+                console.log("Reason: " + resultObj.scan_aborted);
                 res.status(200).send(resultObj.scan_aborted);
-                console.log("Scan failed for: "+scanUrl.hostname);
                 resolve(false);
             } else {
                 var result_details = {
@@ -267,14 +275,22 @@ function startScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
         child = exec(cmd, null, function(error, stderr, stdout) {
             var resultObj = JSON.parse(fs.readFileSync("./data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted != undefined) {
-                // Do Nothing
+                console.log("Scan failed for: " + scanUrl.hostname);
+                try {
+                    fs.unlink("./data/scan_results/" + filename, (err) => {
+                        if (err) throw err;
+                    });
+                } catch (err) {
+
+                }
+                console.log("Reason: " + resultObj.scan_aborted);
             } else {
                 var result_details = {
                     "hostname": scanUrl.hostname,
@@ -283,6 +299,7 @@ function startScan(scanUrl, res) {
                 };
                 var obj = JSON.parse(fs.readFileSync("./data/scan_history.json", "utf8"));
                 obj.scan_history.push(result_details);
+                console.log("Scan successfully completed for: "+result_details.hostname);
                 fs.writeFileSync("./data/scan_history.json", JSON.stringify(obj), function(err) {
                     if (err) {
                         console.log("Error: " + err);
@@ -318,7 +335,7 @@ app.post("/schedule", function(req, res) {
             valid;
         if (scanUrl == "") {
             return res.status(400).send('{"message":"Please enter a URL.", "status": "failure"}');
-        } else if (scanUrl !== "" && validUrl.isUri(scanUrl)) {
+        } else if (scanUrl !== "" && (validUrl.isHttpUri(scanUrl) || validUrl.isHttpsUri(scanUrl))) {
             try {
                 var Url = url.parse(scanUrl, true);
                 valid = cron.validate(scheduleRule.trim());
