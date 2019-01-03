@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-03 10:13:33
+ * @Last Modified time: 2019-01-03 10:21:58
  */
 
 var express = require('express'); // Application Framework
@@ -112,7 +112,6 @@ app.get('/logout', (req, res) => {
     }
 });
 
-
 app.get('/', sessionChecker, function(req, res) {
     fs.readFile("static/templates/login.html", function(err, data) {
         if (err) {
@@ -128,7 +127,6 @@ app.get('/', sessionChecker, function(req, res) {
         return res.end();
     });
 });
-
 
 var child;
 
@@ -157,7 +155,6 @@ app.post('/scan', function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         var form = new multiparty.Form();
         form.parse(req, function(err, fields, files) {
-
             // When both the inputs are supplied
             if (fields.scanUrl.toString().trim() !== "" && files.url_list[0].size > 0) {
                 return res.send("Please supply ethier a URL or a file");
@@ -179,7 +176,6 @@ app.post('/scan', function(req, res) {
                 } else {
                     return res.status(200).send("Invalid URL Supplied");
                 }
-
             }
             // When File is supplied as an input
             else if (files.url_list[0].size > 0 && (fields.scanUrl.toString().trim() == "" || fields.scanUrl.toString().trim() == undefined)) {
@@ -190,14 +186,12 @@ app.post('/scan', function(req, res) {
                     var data = fs.readFileSync(filePath, 'utf8');
                     var urlList = data.split('\n');
                     var promises = [];
-
                     for (var i = 0; i < urlList.length; i++) {
                         if (validUrl.isUri(urlList[i])) {
                             var urlStr = url.parse(urlList[i], true);
                             promises.push(startScan(urlStr, res));
                         }
                     }
-
                     Promise.all(promises).then(function(result) {
                         console.log("List scanned successfully!");
                     }, function(err) {
@@ -208,7 +202,6 @@ app.post('/scan', function(req, res) {
                 } else {
                     return res.status(200).send("Only text files are allowed");
                 }
-
             }
             // When server could not understand the input properly
             else {
@@ -234,13 +227,11 @@ function startSingleScan(scanUrl, res) {
 
     return new Promise(function(resolve, reject) {
         child = exec(cmd, null, function(error, stderr, stdout) {
-
             var resultObj = JSON.parse(fs.readFileSync("./data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted != undefined) {
                 res.status(200).send(resultObj.scan_aborted);
                 resolve(false);
             } else {
-
                 var result_details = {
                     "hostname": scanUrl.hostname,
                     "timestamp": timestamp,
@@ -255,11 +246,8 @@ function startSingleScan(scanUrl, res) {
                 });
                 resolve(true);
             }
-
         });
-
     });
-
 }
 
 function startScan(scanUrl, res) {
@@ -271,12 +259,10 @@ function startScan(scanUrl, res) {
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
         child = exec(cmd, null, function(error, stderr, stdout) {
-
             var resultObj = JSON.parse(fs.readFileSync("./data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted != undefined) {
                 // Do Nothing
             } else {
-
                 var result_details = {
                     "hostname": scanUrl.hostname,
                     "timestamp": timestamp,
@@ -292,9 +278,7 @@ function startScan(scanUrl, res) {
             }
             resolve(true);
         });
-
     });
-
 }
 
 app.get("/fetch/scheduled/history", function(req, res) {
@@ -327,7 +311,6 @@ app.post("/schedule", function(req, res) {
                 valid = cron.validate(scheduleRule.trim());
                 if (valid) {
                     let startTime = new Date();
-
                     var schedule_details = { "rule": scheduleRule.trim(), "startTime": startTime, "scan_nubmer": ++currentCount, "hostname": Url.hostname, "Url": Url.href };
                     var obj = JSON.parse(fs.readFileSync("./data/scheduled_scans.json", 'utf8'));
                     obj.scheduled_scans.push(schedule_details);
@@ -337,7 +320,6 @@ app.post("/schedule", function(req, res) {
                             console.log("Error: " + err);
                         }
                     });
-
                     var task = schedule.scheduleJob({ start: startTime, rule: scheduleRule }, function() {
                         startScan(Url, res).then(function(result) {
                             if (result)
@@ -348,7 +330,6 @@ app.post("/schedule", function(req, res) {
                 } else {
                     return res.status(400).send('{"message":"Invalid cron fields entered. Please retry","status":"failure"}');
                 }
-
             } catch (err) {
                 return res.status(400).send('{"message":"Unable to parse the URL.", "status": "failure"}');
             }
