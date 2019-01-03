@@ -176,7 +176,6 @@
         <div id="scanHistory" class="text-center">
         </div>
         <div class="pagination-container-1"></div>
-        <br>
         <form id="scanScheduler" method="POST" class="form-group" autocomplete="off">
             <h2 class="text-center font-weight-bold">Schedule Scan</h2>
             <div class="row">
@@ -339,7 +338,7 @@
             $("#scanStatus").text("Please supply ethier a URL or a file");
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
-            $("#scanApplication").find("input[type=url], input[type=text]").val("");
+            $("#scanApplication").find("input[type=url], input[type=file]").val("");
         } else if ($("#scanUrl").val() !== "" || $("#urlList").val() !== "") {
             var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             $.ajax({
@@ -377,7 +376,7 @@
                     }
                 }
             });
-            $("#scanApplication").find("input[type=url], input[type=text]").val("");
+            $("#scanApplication").find("input[type=url], input[type=file]").val("");
         } else {
             $("#scanStatus").text("Please supply an input.");
             $("#scanStatus").removeClass('invisible');
