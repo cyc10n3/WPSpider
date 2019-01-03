@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-02 23:32:37
+ * @Last Modified time: 2019-01-03 08:05:46
  */
 
 var express = require('express'); // Application Framework
@@ -219,7 +219,7 @@ app.post('/scan', function(req, res) {
 
         });
         form.on('close', function() {
-            console.log('Upload completed!');
+            //console.log('Upload completed!');
         });
     } else {
         res.redirect('/login');
@@ -227,10 +227,10 @@ app.post('/scan', function(req, res) {
 });
 
 function startSingleScan(scanUrl, res) {
-    console.log("Scan started on URI: " + scanUrl.href);
+    console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.href + '|| :';
+    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname +'|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
@@ -265,10 +265,10 @@ function startSingleScan(scanUrl, res) {
 }
 
 function startScan(scanUrl, res) {
-    console.log("Scan started on URI: " + scanUrl.href);
+    console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.href + '|| :';
+    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
