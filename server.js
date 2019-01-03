@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-03 08:05:46
+ * @Last Modified time: 2019-01-03 10:13:33
  */
 
 var express = require('express'); // Application Framework
@@ -195,8 +195,6 @@ app.post('/scan', function(req, res) {
                         if (validUrl.isUri(urlList[i])) {
                             var urlStr = url.parse(urlList[i], true);
                             promises.push(startScan(urlStr, res));
-                        } else {
-                            //console.log("Invalid URI found: " + urlList[i]);
                         }
                     }
 
@@ -322,8 +320,8 @@ app.post("/schedule", function(req, res) {
             scheduleRule = second + " " + minute + " " + hour + " " + day + " " + dayOfMonth + " " + dayOfWeek,
             valid;
         if (scanUrl == "") {
-            return res.status(200).send('{"message":"Please enter a URL.", "statusCode": 0}');
-        } else if (scanUrl !== "") {
+            return res.status(400).send('{"message":"Please enter a URL.", "status": "failure"}');
+        } else if (scanUrl !== "" && validUrl.isUri(scanUrl)) {
             try {
                 var Url = url.parse(scanUrl, true);
                 valid = cron.validate(scheduleRule.trim());
@@ -346,16 +344,16 @@ app.post("/schedule", function(req, res) {
                                 console.log("Scheduled scan completed successfully");
                         });
                     });
-                    return res.status(200).send('{"message":"Scan has been scheduled.","statusCode":100}');
+                    return res.status(200).send('{"message":"Scan has been scheduled successfully.","status":"success"}');
                 } else {
-                    return res.status(200).send('{"message":"Invalid cron fields entered. Please retry","statusCode":400}');
+                    return res.status(400).send('{"message":"Invalid cron fields entered. Please retry","status":"failure"}');
                 }
 
             } catch (err) {
-                return res.status(200).send('{"message":"Unable to parse the URL.", "statusCode": 200}');
+                return res.status(400).send('{"message":"Unable to parse the URL.", "status": "failure"}');
             }
         } else {
-            return res.status(200).send('{"message":"I don\'t understand the input.", "statusCode": 300}');
+            return res.status(400).send('{"message":"Please enter a valid URL", "status": "failure"}');
         }
     } else {
         res.redirect('/login');

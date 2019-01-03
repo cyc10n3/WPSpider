@@ -366,15 +366,19 @@
             },
             success: function(res) {
                 res = JSON.parse(res);
-                if (res.statusCode == 0 || res.statusCode == 200 || res.statusCode == 300 || res.statusCode == 400 || res.statusCode == 500) {
-                    $('#scanScheduler .error-message').html(res.message);
-                    $('#scanScheduler .success-message').addClass('d-none');
-                    $('#scanScheduler .error-message').removeClass('d-none');
-
-                } else if (res.statusCode == 100) {
+                if (res.status == "success") {
                     $('#scanScheduler .success-message').html(res.message);
                     $('#scanScheduler .error-message').addClass('d-none');
                     $('#scanScheduler .success-message').removeClass('d-none');
+                }
+                $("#scanScheduler").find("input[type=url], input[type=text]").val("");
+            },
+            error: function(err) {
+                res = JSON.parse(err.responseText);
+                if (err.status === 400 && res.status === "failure") {
+                    $('#scanScheduler .error-message').html(res.message);
+                    $('#scanScheduler .success-message').addClass('d-none');
+                    $('#scanScheduler .error-message').removeClass('d-none');
                 }
                 $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             }
