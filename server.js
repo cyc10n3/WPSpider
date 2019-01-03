@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-03 17:38:39
+ * @Last Modified time: 2019-01-03 19:25:40
  */
 
 var express = require('express'); // Application Framework
@@ -299,7 +299,7 @@ function startScan(scanUrl, res) {
                 };
                 var obj = JSON.parse(fs.readFileSync("./data/scan_history.json", "utf8"));
                 obj.scan_history.push(result_details);
-                console.log("Scan successfully completed for: "+result_details.hostname);
+                console.log("Scan successfully completed for: " + result_details.hostname);
                 fs.writeFileSync("./data/scan_history.json", JSON.stringify(obj), function(err) {
                     if (err) {
                         console.log("Error: " + err);
