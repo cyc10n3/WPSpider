@@ -418,7 +418,7 @@
                             $('#scanScheduler .error-message').removeClass('d-none');
                         }
                     } catch (err) {
-                        console.log("Failer to parse response");
+                        console.log("Failed to parse response");
                     }
                 } else if (err.status === 403) {
                     $('#scanScheduler .error-message').html(err.responseText);
