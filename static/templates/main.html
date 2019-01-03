@@ -211,9 +211,9 @@
             </div>
             <br>
             <div class="row text-left">
-                <span class="error-message invisible alert alert-danger">
+                <span class="error-message d-none alert alert-danger">
                 </span>
-                <span class="success-message invisible alert alert-primary">
+                <span class="success-message d-none alert alert-primary">
                 </span>
             </div>
         </form>
@@ -400,10 +400,8 @@
                     res = JSON.parse(res);
                     if (res.status == "success") {
                         $('#scanScheduler .success-message').html(res.message);
-                        $('#scanScheduler .success-message').removeClass('invisible');
-                        $('#scanScheduler .success-message').addClass('visible');
-                        $('#scanScheduler .error-message').removeClass('visible');
-                        $('#scanScheduler .error-message').addClass('invisible');
+                        $('#scanScheduler .success-message').removeClass('d-none');
+                        $('#scanScheduler .error-message').addClass('d-none');
                     }
                     $("#scanScheduler").find("input[type=url], input[type=text]").val("");
                 } catch (err) {
@@ -416,20 +414,16 @@
                         res = JSON.parse(err.responseText);
                         if (res.status === "failure") {
                             $('#scanScheduler .error-message').html(res.message);
-                            $('#scanScheduler .success-message').removeClass('visible');
-                            $('#scanScheduler .success-message').addClass('invisible');
-                            $('#scanScheduler .error-message').removeClass('invisible');
-                            $('#scanScheduler .error-message').addClass('visible');
+                            $('#scanScheduler .success-message').addClass('d-none');
+                            $('#scanScheduler .error-message').removeClass('d-none');
                         }
                     } catch (err) {
                         console.log("Failer to parse response");
                     }
                 } else if (err.status === 403) {
                     $('#scanScheduler .error-message').html(err.responseText);
-                    $('#scanScheduler .success-message').removeClass('visible');
-                    $('#scanScheduler .success-message').addClass('invisible');
-                    $('#scanScheduler .error-message').removeClass('invisible');
-                    $('#scanScheduler .error-message').addClass('visible');
+                    $('#scanScheduler .success-message').addClass('d-none');
+                    $('#scanScheduler .error-message').removeClass('d-none');
                 }
                 $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             }
