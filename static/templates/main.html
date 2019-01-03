@@ -402,24 +402,36 @@
 
             },
             success: function(res) {
-                res = JSON.parse(res);
-                if (res.status == "success") {
-                    $('#scanScheduler .success-message').html(res.message);
-                    $('#scanScheduler .success-message').removeClass('invisible');
-                    $('#scanScheduler .success-message').addClass('visible');
-                    $('#scanScheduler .error-message').removeClass('visible');
-                    $('#scanScheduler .error-message').addClass('invisible');
+                try {
+                    res = JSON.parse(res);
+                    if (res.status == "success") {
+                        $('#scanScheduler .success-message').html(res.message);
+                        $('#scanScheduler .success-message').removeClass('invisible');
+                        $('#scanScheduler .success-message').addClass('visible');
+                        $('#scanScheduler .error-message').removeClass('visible');
+                        $('#scanScheduler .error-message').addClass('invisible');
+                    }
+                    $("#scanScheduler").find("input[type=url], input[type=text]").val("");
+                } catch (err) {
+                    console.log("Failed to parse response");
                 }
-                $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             },
             error: function(err) {
-                if (err.status === 400 && res.status === "failure") {
-                    res = JSON.parse(err.responseText);
-                    $('#scanScheduler .error-message').html(res.message);
-                    $('#scanScheduler .success-message').removeClass('visible');
-                    $('#scanScheduler .success-message').addClass('invisible');
-                    $('#scanScheduler .error-message').removeClass('invisible');
-                    $('#scanScheduler .error-message').addClass('visible');
+                if (err.status === 400) {
+                    try {
+                        res = JSON.parse(err.responseText);
+                        if (res.status === "failure") {
+                            $('#scanScheduler .error-message').html(res.message);
+                            $('#scanScheduler .success-message').removeClass('visible');
+                            $('#scanScheduler .success-message').addClass('invisible');
+                            $('#scanScheduler .error-message').removeClass('invisible');
+                            $('#scanScheduler .error-message').addClass('visible');
+
+                        }
+                    } catch (err) {
+                        console.log("Failer to parse response");
+                    }
+
                 } else if (err.status === 403) {
                     $('#scanScheduler .error-message').html(err.responseText);
                     $('#scanScheduler .success-message').removeClass('visible');
