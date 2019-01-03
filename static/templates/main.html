@@ -428,6 +428,7 @@
                 $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             }
         });
+        $("#minute").focus();
     });
 
     function fetchScanHistory() {
@@ -513,6 +514,7 @@
     }
 
     $("document").ready(function() {
+        $("#scanUrl").focus();
         fetchCsrfToken();
         fetchScanHistory();
         setInterval(fetchScanHistory, 120000);
