@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 01:22:23
+ * @Last Modified time: 2019-01-04 01:24:56
  */
 
 var express = require('express'); // Application Framework
@@ -48,6 +48,7 @@ app.use(cookieParser());
 app.use(csrf({ cookie: true }));
 app.use(function(err, req, res, next) {
     if (err.code !== 'EBADCSRFTOKEN') return next(err);
+
     // handle CSRF token errors here
     res.status(403);
     res.send('Invalid CSRF Token. Please refresh the page.');
@@ -160,6 +161,7 @@ app.get('/main', function(req, res) {
         res.redirect('/login');
     }
 });
+
 
 app.post('/scan', function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
