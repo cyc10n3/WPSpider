@@ -48,7 +48,6 @@ app.use(cookieParser());
 app.use(csrf({ cookie: true }));
 app.use(function(err, req, res, next) {
     if (err.code !== 'EBADCSRFTOKEN') return next(err);
-
     // handle CSRF token errors here
     res.status(403);
     res.send('Invalid CSRF Token. Please refresh the page.');
@@ -161,7 +160,6 @@ app.get('/main', function(req, res) {
         res.redirect('/login');
     }
 });
-
 
 app.post('/scan', function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
