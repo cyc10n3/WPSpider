@@ -299,7 +299,6 @@
     });
 
     $("#urlList").on("change", function() {
-
         if (this.files[0].size > 0 && $("#scanUrl").val() !== "") {
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
             $("#scanStatus").text("Please supply ethier a URL or a file");
@@ -315,13 +314,9 @@
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
         }
-
-
     });
     $("#scanUrl").on('keyup', function() {
-
         var exp = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
-
         if (this.value !== "" && $("#urlList").val() !== "") {
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
             $("#scanStatus").text("Please supply ethier a URL or a file");
@@ -332,7 +327,6 @@
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
         }
-
     });
 
     $("#scanApplication").submit(function(evt) {
@@ -431,7 +425,6 @@
                     } catch (err) {
                         console.log("Failer to parse response");
                     }
-
                 } else if (err.status === 403) {
                     $('#scanScheduler .error-message').html(err.responseText);
                     $('#scanScheduler .success-message').removeClass('visible');
