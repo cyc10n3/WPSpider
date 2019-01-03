@@ -207,6 +207,8 @@
                         $(".container .error-message").html(err.responseText);
                         $(".container .error-message").removeClass('invisible');
                         $(".container .error-message").addClass('visible');
+                        $("#username").val("");
+                        $("#password").val("");
                     } else {
                         console.log("Login is not working!");
                     }
