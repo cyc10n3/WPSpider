@@ -2,21 +2,21 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 01:24:56
+ * @Last Modified time: 2019-01-04 01:26:12
  */
 
-var express = require('express'); // Application Framework
-var app = express(); // Decalring application instance
-var url = require('url'); // For parsing URL
-var fs = require('fs'); // For file system access
-var bodyParser = require('body-parser'); // For parsing or decoding body
-var exec = require('child_process').exec; // For executing commands/scripts such as wpscan
-var multiparty = require('multiparty'); // For parsing form fields such as file, fields, etc
-var validUrl = require('valid-url'); // For validating URL
-var Promise = require('bluebird'); // For promise
-const https = require('https'); // For implementing SSL/TLS
-var cron = require('node-cron'); // For validating cron rules
-var schedule = require('node-schedule'); // For scheduling jobs and maintaining a history of cron jobs
+var express = require('express');
+var app = express();
+var url = require('url');
+var fs = require('fs');
+var bodyParser = require('body-parser');
+var exec = require('child_process').exec;
+var multiparty = require('multiparty');
+var validUrl = require('valid-url');
+var Promise = require('bluebird');
+const https = require('https');
+var cron = require('node-cron');
+var schedule = require('node-schedule');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var helmet = require('helmet');
