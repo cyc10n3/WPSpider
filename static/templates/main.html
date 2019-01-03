@@ -45,7 +45,7 @@
 
     body #scanStatus {
         font-weight: bold;
-
+        min-height: 2rem;
     }
 
     #scanScheduler .col-sm-2 {
@@ -164,9 +164,10 @@
             <span class="d-inline-block" style="width: 20%; max-width: 30%; word-break: break-word;">
                 <input type="file" class="form-control-file" name="url_list" id="urlList" accept="text/plain" title="Choose a text file">
             </span>
+            <input type="hidden" name="_csrf">
             <input type="submit" value="Start Scan" class="btn btn-primary">
         </form>
-        <div id="scanStatus" class="text-center">
+        <div id="scanStatus" class="text-center invisible">
         </div>
         <div id="scanHistory" class="text-center">
         </div>
@@ -209,9 +210,11 @@
                 <input type="submit" value="Schedule Scan" class="btn btn-primary col-sm-2">
             </div>
             <br>
-            <div class="error-message d-none alert alert-danger">
-            </div>
-            <div class="success-message d-none alert alert-primary">
+            <div class="row text-left">
+                <span class="error-message invisible alert alert-danger">
+                </span>
+                <span class="success-message invisible alert alert-primary">
+                </span>
             </div>
         </form>
         <div id="scheduleHistory" class="text-center"></div>
@@ -300,11 +303,17 @@
         if (this.files[0].size > 0 && $("#scanUrl").val() !== "") {
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
             $("#scanStatus").text("Please supply ethier a URL or a file");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         } else if (this.files[0].size > 2097152) {
             $("#scanApplication").find("input[type=file]").val("");
             $("#scanStatus").text("File size should not exceed 2 MB.");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         } else if (this.files[0].size < 2097152 && $("#scanUrl").val() == "") {
             $("#scanStatus").text("");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         }
 
 
@@ -316,8 +325,12 @@
         if (this.value !== "" && $("#urlList").val() !== "") {
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
             $("#scanStatus").text("Please supply ethier a URL or a file");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         } else if ((this.value.match(exp)) && $("#urlList").val() == "") {
             $("#scanStatus").text("");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         }
 
     });
@@ -326,41 +339,65 @@
         evt.preventDefault();
         if ($("#scanUrl").val() !== "" && $("#urlList").val() !== "") {
             $("#scanStatus").text("Please supply ethier a URL or a file");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
             $("#scanApplication").find("input[type=url], input[type=text]").val("");
         } else if ($("#scanUrl").val() !== "" || $("#urlList").val() !== "") {
+            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             $.ajax({
                 url: "/scan",
                 type: "POST",
                 data: new FormData($("#scanApplication")[0]),
+                headers: {
+                    'CSRF-Token': token
+                },
                 cache: false,
                 contentType: false,
                 processData: false,
                 beforeSend: function() {
                     if ($("#scanUrl").val() !== "" && $("#urlList").val() === "") {
-                        $("#scanStatus").html("<span>Scanning started. Please wait, this may take several minutes to complete...</span><img style='padding-bottom: 10px; height: 2%; width: 2%;' src='img/ajax_loader_gray_32.gif'>");
+                        $("#scanStatus").html("<span style='vertical-align: sub'>Scanning started. Please wait, this may take several minutes to complete...</span><img style='height: 2%; width: 2%;' src='img/ajax_loader_gray_32.gif'>");
+                        $("#scanStatus").removeClass('invisible');
+                        $("#scanStatus").addClass('visible');
                     }
                 },
                 success: function(res) {
                     $("#scanStatus").html(res);
+                    $("#scanStatus").removeClass('invisible');
+                    $("#scanStatus").addClass('visible');
                     fetchScanHistory();
                 },
                 error: function(err) {
-                    $("#scanStatus").html("It's taking time for scan to complete. Scan history will be updated automatically <br>once the scan is complete.");
+                    if (err.status === 403) {
+                        $("#scanStatus").html(err.responseText);
+                        $("#scanStatus").removeClass('invisible');
+                        $("#scanStatus").addClass('visible');
+                    } else {
+                        $("#scanStatus").html("It's taking time for scan to complete. Scan history will be updated automatically <br>once the scan is complete.");
+                        $("#scanStatus").removeClass('invisible');
+                        $("#scanStatus").addClass('visible');
+                    }
                 }
             });
             $("#scanApplication").find("input[type=url], input[type=text]").val("");
         } else {
             $("#scanStatus").text("Please supply an input.");
+            $("#scanStatus").removeClass('invisible');
+            $("#scanStatus").addClass('visible');
         }
     });
 
     $("#scanScheduler").submit(function(evt) {
         evt.preventDefault();
         var ajaxData = $('#scanScheduler').serialize();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         $.ajax({
             url: "/schedule",
             type: "POST",
             data: ajaxData,
+            headers: {
+                'CSRF-Token': token
+            },
             beforeSend: function() {
 
             },
@@ -368,17 +405,27 @@
                 res = JSON.parse(res);
                 if (res.status == "success") {
                     $('#scanScheduler .success-message').html(res.message);
-                    $('#scanScheduler .error-message').addClass('d-none');
-                    $('#scanScheduler .success-message').removeClass('d-none');
+                    $('#scanScheduler .success-message').removeClass('invisible');
+                    $('#scanScheduler .success-message').addClass('visible');
+                    $('#scanScheduler .error-message').removeClass('visible');
+                    $('#scanScheduler .error-message').addClass('invisible');
                 }
                 $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             },
             error: function(err) {
-                res = JSON.parse(err.responseText);
                 if (err.status === 400 && res.status === "failure") {
+                    res = JSON.parse(err.responseText);
                     $('#scanScheduler .error-message').html(res.message);
-                    $('#scanScheduler .success-message').addClass('d-none');
-                    $('#scanScheduler .error-message').removeClass('d-none');
+                    $('#scanScheduler .success-message').removeClass('visible');
+                    $('#scanScheduler .success-message').addClass('invisible');
+                    $('#scanScheduler .error-message').removeClass('invisible');
+                    $('#scanScheduler .error-message').addClass('visible');
+                } else if (err.status === 403) {
+                    $('#scanScheduler .error-message').html(err.responseText);
+                    $('#scanScheduler .success-message').removeClass('visible');
+                    $('#scanScheduler .success-message').addClass('invisible');
+                    $('#scanScheduler .error-message').removeClass('invisible');
+                    $('#scanScheduler .error-message').addClass('visible');
                 }
                 $("#scanScheduler").find("input[type=url], input[type=text]").val("");
             }
@@ -453,7 +500,23 @@
             }
         });
     }
+
+    function fetchCsrfToken() {
+        $.ajax({
+            url: "/csrfToken",
+            type: "GET",
+            async: false,
+            success: function(res) {
+                $('head').append('<meta name="csrf-token" content=' + res.csrfToken + '>');
+            },
+            error: function(err) {
+                console.log("Error fetching CSRF token");
+            }
+        });
+    }
+
     $("document").ready(function() {
+        fetchCsrfToken();
         fetchScanHistory();
         setInterval(fetchScanHistory, 120000);
         scheduledHistory();

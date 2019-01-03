@@ -126,6 +126,10 @@
         <div class="jumbotron text-center" style="background-color: #000;">
             <h1 style="color: gray; font-family: fantasy; line-height: 1; font-size: 4rem">WPScan- Web Interface</h1>
         </div>
+        <div class="text-center">
+            <span class="error-message alert alert-warning invisible">
+            </span>
+        </div>
         <div id="login-row" class="row justify-content-center align-items-center">
             <div id="login-column" class="col-md-6">
                 <div class="box">
@@ -137,7 +141,7 @@
                     <div class="shape6"></div>
                     <div class="shape7"></div>
                     <div class="float">
-                        <form class="form" action="/login" method="POST" autocomplete="off">
+                        <form class="form" action="/login" method="POST" id="loginForm" autocomplete="off">
                             <div class="form-group">
                                 <label for="username" class="text-white">Username:</label><br>
                                 <input type="text" name="username" id="username" class="form-control" autofocus="true">
@@ -166,6 +170,51 @@
     </div>
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    $("document").ready(function() {
+        (function fetchCsrfToken() {
+            $.ajax({
+                url: "/csrfToken",
+                type: "GET",
+                async: false,
+                success: function(res) {
+                    $('head').append('<meta name="csrf-token" content=' + res.csrfToken + '>');
+                },
+                error: function(err) {
+                    console.log("Error fetching CSRF token");
+                }
+            });
+        })();
+        $("#loginForm").submit(function(evt) {
+            evt.preventDefault();
+            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            $.ajax({
+                url: "/login",
+                type: "POST",
+                data: $("#loginForm").serialize(),
+                headers: {
+                    'CSRF-Token': token
+                },
+                success: function(res) {
+                    if (res) {
+                        window.location.replace('/main');
+                    } else {
+                        // Do nothing
+                    }
+                },
+                error: function(err) {
+                    if (err.status === 403) {
+                        $(".container .error-message").html(err.responseText);
+                        $(".container .error-message").removeClass('invisible');
+                        $(".container .error-message").addClass('visible');
+                    } else {
+                        console.log("Login is not working!");
+                    }
+                }
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>

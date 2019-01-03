@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-03 10:21:58
+ * @Last Modified time: 2019-01-03 15:44:09
  */
 
 var express = require('express'); // Application Framework
@@ -20,6 +20,7 @@ var schedule = require('node-schedule'); // For scheduling jobs and maintaining 
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var helmet = require('helmet');
+var csrf = require('csurf')
 
 /* 
 Certificate and Key generation commands:
@@ -43,12 +44,19 @@ app.use(express.static(__dirname + '/static/'));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(cookieParser());
+app.use(csrf({ cookie: true }));
+app.use(function (err, req, res, next) {
+  if (err.code !== 'EBADCSRFTOKEN') return next(err);
+
+  // handle CSRF token errors here
+  res.status(403);
+  res.send('Invalid CSRF Token. Please refresh the page.');
+})
 
 server.listen(1337, function() {
     console.log('Server has started listening on port ' + 1337);
 });
-
-app.use(cookieParser());
 
 var appConfig = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
@@ -95,9 +103,9 @@ app.route('/login')
             password = req.body.password;
         if (username === appConfig.login_creds.username && password === appConfig.login_creds.password) {
             req.session.user = username;
-            res.redirect('/main');
+            res.status(200).send(true);
         } else {
-            res.redirect('/login');
+            res.status(403).send("Invalid username or password");
         }
     });
 
@@ -126,6 +134,10 @@ app.get('/', sessionChecker, function(req, res) {
         res.write(data);
         return res.end();
     });
+});
+
+app.get('/csrfToken', function(req, res) {
+    return res.status(200).send({ csrfToken: req.csrfToken() });
 });
 
 var child;
@@ -221,7 +233,7 @@ function startSingleScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname +'|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
@@ -230,6 +242,7 @@ function startSingleScan(scanUrl, res) {
             var resultObj = JSON.parse(fs.readFileSync("./data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted != undefined) {
                 res.status(200).send(resultObj.scan_aborted);
+                console.log("Scan failed for: "+scanUrl.hostname);
                 resolve(false);
             } else {
                 var result_details = {
@@ -254,7 +267,7 @@ function startScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.hostname + '|| :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
