@@ -40,7 +40,7 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 ## Known Issues
 
 ```
-* Login Bruteforce
+* Login bruteforce possible
 ```
 
 ## Authors
