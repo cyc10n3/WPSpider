@@ -405,7 +405,7 @@ reinitializeScheduledScans();
 app.get("/report", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
-            var filename = req.query.file.escape();
+            var filename =encodeURIComponent(req.query.file);
             var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, 'utf8'));
             res.send(obj);
             res.end();
