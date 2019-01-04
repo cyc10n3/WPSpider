@@ -18,7 +18,7 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 * cd  WPScan-Web-Interface
 * npm install (for installing node modules or dependencies)
 * npm start
-* Open https://localhost:1337 in browser
+* Open https://localhost:1337 or https://127.0.0.1:1337 in browser
 * Login with default credentials (admin/cyc10n3)
 ```
 ![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `It is recommended to change the login password by modifying config.json`[`file`](https://github.com/cyc10n3/WPScan_Web_Interface/blob/master/config.json).
