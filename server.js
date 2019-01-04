@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 19:55:54
+ * @Last Modified time: 2019-01-04 20:24:27
  */
 
 var express = require('express');
@@ -189,7 +189,7 @@ app.post('/scan', function(req, res) {
                             var scanUrl = url.parse(_url, true);
                             startSingleScan(scanUrl, res).then(function(result) {
                                 if (result) {
-                                    console.log("URL Scanned successfully");
+                                    console.log("URL Scanned successfully: " + scanUrl.href);
                                     res.status(200).send("URL Scanned successfully");
                                 }
                             });
@@ -247,7 +247,7 @@ function startSingleScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '/ || :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
@@ -289,7 +289,7 @@ function startScan(scanUrl, res) {
     console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '|| :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '/ || :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
@@ -468,7 +468,6 @@ app.post("/delete", function(req, res) {
                 var historyLength = scanHistoryList.length;
                 var i;
                 for (i = 0; i < historyLength; i++) {
-                    console.log(i)
                     if (scanHistoryList[i].hostname === hostname && scanHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Report deletion logic
                         var j = i;
@@ -479,7 +478,6 @@ app.post("/delete", function(req, res) {
                             } else {
                                 console.log("Report successfully deleted. Updating scan history...");
                                 historyObj.scan_history.splice(j, 1);
-                                console.log(i + " Updated object: " + JSON.stringify(historyObj));
                                 fs.writeFile(contextPath + "data/scan_history.json", JSON.stringify(historyObj), function(err) {
                                     if (err) {
                                         console.log("Failed to update scan history.");

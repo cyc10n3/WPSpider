@@ -43,7 +43,7 @@
     body #scheduleHistory h2 {
         font-weight: bold;
     }
-    
+
     body #scanScheduler .row {
         margin-left: 0 !important
     }
@@ -83,7 +83,8 @@
         outline: none;
     }
 
-    #scanHistory .view-report, #scanHistory .delete-report{
+    #scanHistory .view-report,
+    #scanHistory .delete-report {
         font-size: 1.5rem !important;
     }
 
@@ -388,7 +389,7 @@
         }
     });
 
-    $(document).on("click", "#scanHistory .delete-report", function(evt){
+    $(document).on("click", "#scanHistory .delete-report", function(evt) {
         evt.preventDefault();
         var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         var hostname = $(this).data("hostname");
@@ -396,16 +397,16 @@
         $.ajax({
             url: "/delete",
             type: "POST",
-            data: "hostname="+hostname+"&timestamp="+timestamp,
+            data: "hostname=" + hostname + "&timestamp=" + timestamp,
             headers: {
                 'CSRF-Token': token
             },
-            success: function(res){
+            success: function(res) {
                 console.log(res);
-                if(res)
+                if (res)
                     fetchScanHistory();
             },
-            error: function(err){
+            error: function(err) {
                 console.error(err);
             }
         });
@@ -487,7 +488,11 @@
                         }
                     });
                     $("#scanHistory").show();
-                    $('.pagination-container-1').show();
+                    if (data.scan_history.length < 10) {
+                        $('.pagination-container-1').hide();
+                    } else {
+                        $('.pagination-container-1').show();
+                    }
                 }
             },
             error: function(err) {
@@ -505,6 +510,7 @@
                 var source = document.getElementById('schedule-history-template').innerHTML;
                 var template = Handlebars.compile(source);
                 if (data.scheduled_scans.length === 0) {
+                    $("#scheduleHistory").hide();
                     $('.pagination-container-2').hide();
                 } else {
                     $('.pagination-container-2').pagination({
@@ -520,7 +526,12 @@
                             $('#scheduleHistory').html(html);
                         }
                     });
-                    $('.pagination-container-2').show();
+                    $("#scheduleHistory").show();
+                    if (data.scheduled_scans.length < 10) {
+                        $('.pagination-container-2').hide();
+                    } else {
+                        $('.pagination-container-2').show();
+                    }
                 }
             },
             error: function(err) {
