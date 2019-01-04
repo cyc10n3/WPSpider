@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="/css/reset.css">
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/pagination.css">
+    <link rel="stylesheet" type="text/css" href="/css/font-awesome.min.css">
     <style type="text/css">
     body {
         background-image: url('/img/page-background.jpeg');
@@ -82,6 +83,10 @@
         outline: none;
     }
 
+    #scanHistory .view-report, #scanHistory .delete-report{
+        font-size: 1.5rem !important;
+    }
+
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
@@ -132,10 +137,6 @@
     .link-logout:hover {
         color: #fff;
         background-color: #0074d9;
-    }
-
-    .view-report:visited {
-        color: #FFF;
     }
 
     .page-footer {
@@ -241,7 +242,12 @@
                                 <td style="width:35%" class="align-middle">{{hostname}}</td>
                                 <td style="width:35%" class="align-middle">{{prettifyDate timestamp}}</td>
                                 <td style="width:25%" class="align-middle">
-                                    <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="btn btn-success view-report">View</a>
+                                    <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="view-report">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} class="delete-report">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
                         {{/each}}
@@ -289,8 +295,6 @@
     <script type="text/javascript" src="/js/handlebars.min.js"></script>
     <script type="text/javascript" src="/js/pagination.min.js"></script>
     <script type="text/javascript">
-    //var scanHistoryCount = 1;
-    //var scheduleHistoryCount = 1;
     Handlebars.registerHelper("scanHistoryCounter", function() {
         return scanHistoryCount++;
     });
@@ -384,6 +388,29 @@
         }
     });
 
+    $(document).on("click", "#scanHistory .delete-report", function(evt){
+        evt.preventDefault();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var hostname = $(this).data("hostname");
+        var timestamp = $(this).data("timestamp");
+        $.ajax({
+            url: "/delete",
+            type: "POST",
+            data: "hostname="+hostname+"&timestamp="+timestamp,
+            headers: {
+                'CSRF-Token': token
+            },
+            success: function(res){
+                console.log(res);
+                if(res)
+                    fetchScanHistory();
+            },
+            error: function(err){
+                console.error(err);
+            }
+        });
+    });
+
     $("#scanScheduler").submit(function(evt) {
         evt.preventDefault();
         var ajaxData = $('#scanScheduler').serialize();
@@ -443,9 +470,9 @@
                 var source = document.getElementById('scan-history-template').innerHTML;
                 var template = Handlebars.compile(source);
                 if (data.scan_history.length === 0) {
-                    $('.pagination-container-1').hide();
+                    $("#scanHistory").hide();
+                    $(".pagination-container-1").hide();
                 } else {
-                    data.scan_history.reverse();
                     $('.pagination-container-1').pagination({
                         dataSource: data.scan_history,
                         pageSize: 10,
@@ -459,6 +486,7 @@
                             $('#scanHistory').html(html);
                         }
                     });
+                    $("#scanHistory").show();
                     $('.pagination-container-1').show();
                 }
             },
@@ -479,7 +507,6 @@
                 if (data.scheduled_scans.length === 0) {
                     $('.pagination-container-2').hide();
                 } else {
-                    data.scheduled_scans.reverse();
                     $('.pagination-container-2').pagination({
                         dataSource: data.scheduled_scans,
                         pageSize: 10,

@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 11:24:10
+ * @Last Modified time: 2019-01-04 19:55:54
  */
 
 var express = require('express');
@@ -22,8 +22,8 @@ var session = require('express-session');
 var helmet = require('helmet');
 var csrf = require('csurf')
 
-
 var contextPath = "./";
+
 /* 
 Certificate and Key generation commands:
 ========================================
@@ -101,12 +101,17 @@ app.route('/login')
     .post((req, res) => {
         var username = req.body.username,
             password = req.body.password;
-        if (username === appConfig.login_creds.username && password === appConfig.login_creds.password) {
-            req.session.user = username;
-            res.status(200).send(true);
+        if (username !== undefined && password !== undefined) {
+            if (username.toString() === appConfig.login_creds.username && password.toString() === appConfig.login_creds.password) {
+                req.session.user = username;
+                res.status(200).send(true);
+            } else {
+                res.status(403).send("Invalid username or password");
+            }
         } else {
-            res.status(403).send("Invalid username or password");
+            res.status(403).send("Request has been tampered");
         }
+
     });
 
 // route for user logout
@@ -268,7 +273,7 @@ function startSingleScan(scanUrl, res) {
                     "filename": filename
                 };
                 var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
-                obj.scan_history.push(result_details);
+                obj.scan_history.unshift(result_details);
                 fs.writeFileSync(contextPath + "data/scan_history.json", JSON.stringify(obj), function(err) {
                     if (err) {
                         console.log("Error: " + err);
@@ -289,31 +294,39 @@ function startScan(scanUrl, res) {
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
         child = exec(cmd, null, function(error, stderr, stdout) {
-            var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
-            if (resultObj.scan_aborted !== undefined) {
-                console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname);
-                try {
-                    fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
-                        if (err) throw err;
-                    });
-                } catch (err) {
+            try {
+                var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
+                if (resultObj.scan_aborted !== undefined) {
+                    console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname);
+                    try {
+                        fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
+                            if (err) throw err;
+                        });
+                    } catch (err) {
 
-                }
-                console.log("Reason: " + resultObj.scan_aborted);
-            } else {
-                var result_details = {
-                    "hostname": scanUrl.hostname,
-                    "timestamp": timestamp,
-                    "filename": filename
-                };
-                var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
-                obj.scan_history.push(result_details);
-                console.log("Scan successfully completed for: " + result_details.hostname);
-                fs.writeFileSync(contextPath + "data/scan_history.json", JSON.stringify(obj), function(err) {
-                    if (err) {
-                        console.log("Error: " + err);
                     }
-                });
+                    console.log("Reason: " + resultObj.scan_aborted);
+                } else {
+                    var result_details = {
+                        "hostname": scanUrl.hostname,
+                        "timestamp": timestamp,
+                        "filename": filename
+                    };
+                    var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
+                    obj.scan_history.unshift(result_details);
+                    console.log("Scan successfully completed for: " + result_details.hostname);
+                    try {
+                        fs.writeFileSync(contextPath + "data/scan_history.json", JSON.stringify(obj), function(err) {
+                            if (err) {
+                                console.log("Error: " + err);
+                            }
+                        });
+                    } catch (err) {
+                        console.log("Error writing to file: " + err);
+                    }
+                }
+            } catch (err) {
+                console.log("Error reading file: " + err);
             }
             resolve(true);
         });
@@ -356,7 +369,7 @@ app.post("/schedule", function(req, res) {
                         let startTime = new Date();
                         var schedule_details = { "rule": scheduleRule.trim(), "startTime": startTime, "scan_nubmer": ++currentCount, "hostname": Url.hostname, "Url": Url.href };
                         var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-                        obj.scheduled_scans.push(schedule_details);
+                        obj.scheduled_scans.unshift(schedule_details);
                         obj.total = currentCount;
                         fs.writeFileSync(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function() {
                             if (err) {
@@ -420,7 +433,7 @@ app.get("/report", function(req, res) {
                         return;
                     }
                 }
-                if (i == objLen){
+                if (i == objLen) {
                     res.redirect("/main");
                 }
             } else {
@@ -441,6 +454,50 @@ app.get("/fetch/scan/history", function(req, res) {
         res.end();
     } else {
         res.redirect('/login');
+    }
+});
+
+app.post("/delete", function(req, res) {
+    if (req.session.user && req.cookies.user_sid) {
+        try {
+            var hostname = req.body.hostname;
+            var timestamp = req.body.timestamp;
+            if (hostname !== undefined && timestamp !== undefined) {
+                var historyObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
+                var scanHistoryList = historyObj.scan_history;
+                var historyLength = scanHistoryList.length;
+                var i;
+                for (i = 0; i < historyLength; i++) {
+                    console.log(i)
+                    if (scanHistoryList[i].hostname === hostname && scanHistoryList[i].timestamp === parseInt(timestamp)) {
+                        // Report deletion logic
+                        var j = i;
+                        fs.unlink(contextPath + "data/scan_results/" + scanHistoryList[i].filename, (err) => {
+                            if (err) {
+                                console.log("Failed to delete the report.");
+                                return res.status(400).send("Failed to delete the report.");
+                            } else {
+                                console.log("Report successfully deleted. Updating scan history...");
+                                historyObj.scan_history.splice(j, 1);
+                                console.log(i + " Updated object: " + JSON.stringify(historyObj));
+                                fs.writeFile(contextPath + "data/scan_history.json", JSON.stringify(historyObj), function(err) {
+                                    if (err) {
+                                        console.log("Failed to update scan history.");
+                                    } else {
+                                        console.log("Scan history updated successfully.");
+                                        return res.status(200).send(true);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            } else {
+                return res.status(400).send("Request has been tampered");
+            }
+        } catch (err) {
+
+        }
     }
 });
 
