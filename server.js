@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 01:26:12
+ * @Last Modified time: 2019-01-04 11:21:15
  */
 
 var express = require('express');
@@ -405,9 +405,27 @@ reinitializeScheduledScans();
 app.get("/report", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
-            var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + req.query.file, 'utf8'));
-            res.send(obj);
-            res.end();
+            var hostname = req.query.hostname;
+            var timestamp = req.query.timestamp;
+            if (hostname !== undefined && timestamp !== undefined) {
+                var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
+                var i;
+                var objLen = obj.scan_history.length;
+                var scanHistory = obj.scan_history;
+                for (i = 0; i < objLen; i++) {
+                    if (scanHistory[i].hostname == hostname && scanHistory[i].timestamp == timestamp) {
+                        var objResult = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + scanHistory[i].filename, 'utf8'));
+                        res.send(objResult);
+                        res.end();
+                        return;
+                    }
+                }
+                if (i == objLen){
+                    res.redirect("/main");
+                }
+            } else {
+                return res.status(400).send("Request has been tampered");
+            }
         } catch (err) {
             res.redirect('/');
         }
