@@ -74,6 +74,10 @@
         word-break: break-word;
     }
 
+    body #scanApplication {
+        margin-bottom: 0;
+    }
+
     #scanUrl {
         display: inline-block !important;
         width: 50%;
@@ -244,10 +248,10 @@
                                 <td style="width:35%" class="align-middle">{{prettifyDate timestamp}}</td>
                                 <td style="width:25%" class="align-middle">
                                     <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="view-report">
-                                        <i class="fa fa-eye"></i>
+                                        <i class="fa fa-eye" alt="view" title="view"></i>
                                     </a>
                                     <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} class="delete-report">
-                                        <i class="fa fa-trash"></i>
+                                        <i class="fa fa-trash" alt="delete" title="delete"></i>
                                     </a>
                                 </td>
                             </tr>
