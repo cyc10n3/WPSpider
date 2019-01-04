@@ -41,7 +41,6 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 
 ```
 * Login bruteforce possible
-* LFI (Fix in progress)
 ```
 
 ## Authors
