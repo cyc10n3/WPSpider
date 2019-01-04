@@ -8,12 +8,13 @@
     <title>Scan Report</title>
     <link rel="icon" href="/img/favicon.ico">
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/font-awesome.min.css">
     <style type="text/css">
     @media print {
 
         .link-logout,
         footer,
-        .print-button {
+        .print-icon {
             display: none;
         }
     }
@@ -23,6 +24,10 @@
         margin: 0mm;
     }
 
+    .print-icon{
+        font-size: 1.5rem;
+        color: #000;
+    }
     .table td,
     .table th {
         padding: 0.25em !important;
@@ -129,7 +134,7 @@
             </table>
         </div>
         <a href="#" class="float-right" onclick="document.title='Scan Report- {{getHostname target_url}}_'+new Date();window.print();">
-                <img class="float-right print-button" src="/img/print.jpg" height="20%" width="20%">
+                <i class="fa fa-print print-icon"></i>
         </a>
         <table class="table table-hover vuln-list">
             <thead>
