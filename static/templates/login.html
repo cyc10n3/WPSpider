@@ -118,6 +118,22 @@
         right: 0px;
         margin-bottom: 0px;
     }
+
+    .loader {
+        opacity: 0.6;
+        filter: alpha(opacity=50);
+        z-index: 10;
+        /* For IE8 and earlier */
+        background: white url('/img/loader.gif') center center no-repeat;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+
+    #login-row {
+        margin-left: 0;
+        margin-right: 0;
+    }
     </style>
 </head>
 
@@ -130,7 +146,8 @@
             <span class="error-message alert alert-warning invisible">
             </span>
         </div>
-        <div id="login-row" class="row justify-content-center align-items-center">
+        <div id="login-row" class="row justify-content-center align-items-center position-relative">
+            <div class="loader" style="display: none;"></div>
             <div id="login-column" class="col-md-6">
                 <div class="box">
                     <div class="shape1"></div>
@@ -187,6 +204,7 @@
         })();
         $("#loginForm").submit(function(evt) {
             evt.preventDefault();
+            $(".container .error-message").addClass('invisible');
             var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             $.ajax({
                 url: "/login",
@@ -195,22 +213,41 @@
                 headers: {
                     'CSRF-Token': token
                 },
+                beforeSend: function() {
+                    $(".loader").fadeIn('fast');
+                    $(document).keydown(function(objEvent) {
+                        if (objEvent.keyCode == 9) { //tab pressed
+                            objEvent.preventDefault(); // stops its action
+                        }
+                    });
+                },
                 success: function(res) {
                     if (res) {
-                        window.location.replace('/main');
+                        setTimeout(function() {
+                            $(".loader").fadeOut('slow');
+                            window.location.replace('/main');
+                        }, 500);
                     } else {
-                        // Do nothing
+                        $(".loader").addClass('d-none');
+                        $(document).unbind("keydown");
                     }
                 },
                 error: function(err) {
                     if (err.status === 403) {
-                        $(".container .error-message").html(err.responseText);
-                        $(".container .error-message").removeClass('invisible');
-                        $(".container .error-message").addClass('visible');
-                        $("#username").val("");
-                        $("#password").val("");
-                        $("#username").focus();
+                        setTimeout(function() {
+                            $(".loader").fadeOut('slow');
+                            $(document).unbind("keydown");
+                            $(".container .error-message").html(err.responseText);
+                            $(".container .error-message").removeClass('invisible');
+                            $(".container .error-message").addClass('visible');
+                            $("#username").val("");
+                            $("#password").val("");
+                            $("#username").focus();
+                        }, 500);
+
                     } else {
+                        $(".loader").fadeOut('slow');
+                        $(document).unbind("keydown");
                         console.log("Login is not working!");
                     }
                 }
