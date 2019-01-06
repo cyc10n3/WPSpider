@@ -179,6 +179,27 @@
         </form>
         <div id="scanStatus" class="text-center invisible">
         </div>
+        <!-- Modal: Start -->
+        <div class="modal fade" id="myModal">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <input type='hidden' class='report-data'>
+                    <div class="modal-header font-weight-bold">Confirm Delete</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this report?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="deleteReport">Confirm</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal: End -->
         <div id="scanHistory" class="text-center">
         </div>
         <div class="pagination-container-1"></div>
@@ -250,7 +271,7 @@
                                     <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="view-report">
                                         <i class="fa fa-eye" alt="view" title="view"></i>
                                     </a>
-                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} class="delete-report">
+                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#myModal" class="delete-report">
                                         <i class="fa fa-trash" alt="delete" title="delete"></i>
                                     </a>
                                 </td>
@@ -393,11 +414,44 @@
         }
     });
 
-    $(document).on("click", "#scanHistory .delete-report", function(evt) {
+    $(document).on('shown.bs.modal', '#myModal', function(evt) {
+        var hostname = $(evt.relatedTarget).data('hostname');
+        var timestamp = $(evt.relatedTarget).data('timestamp');
+        $("#myModal .report-data").data('hostname', hostname);
+        $("#myModal .report-data").data('timestamp', timestamp);
+    });
+
+    $(document).on("click", "#myModal #deleteReport", function(evt) {
+        evt.preventDefault();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var hostname = $("#myModal .report-data").data('hostname');
+        var timestamp = $("#myModal .report-data").data('timestamp');
+        $.ajax({
+            url: "/delete",
+            type: "POST",
+            data: "hostname=" + hostname + "&timestamp=" + timestamp,
+            headers: {
+                'CSRF-Token': token
+            },
+            success: function(res) {
+                console.log(res);
+                if (res) {
+                    $('#myModal').modal('toggle');
+                    fetchScanHistory();
+                }
+            },
+            error: function(err) {
+                console.error("Failed to delete the report: "+err);
+            }
+        });
+    })
+
+    /*$(document).on("click", "#scanHistory .delete-report", function(evt) {
         evt.preventDefault();
         var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         var hostname = $(this).data("hostname");
         var timestamp = $(this).data("timestamp");
+        $(".modal-body").append("<input type='hidden' data-hostname="+hostname+" data-timestamp="+timestamp+" class='report-data'>");
         $.ajax({
             url: "/delete",
             type: "POST",
@@ -414,7 +468,7 @@
                 console.error(err);
             }
         });
-    });
+    });*/
 
     $("#scanScheduler").submit(function(evt) {
         evt.preventDefault();
