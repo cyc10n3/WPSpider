@@ -337,6 +337,7 @@
             $("#scanStatus").text("Please supply ethier a URL or a file");
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
+            $("#scanUrl").focus();
         } else if (this.files[0].size > 2097152) {
             $("#scanApplication").find("input[type=file]").val("");
             $("#scanStatus").text("File size should not exceed 2 MB.");
@@ -355,6 +356,7 @@
             $("#scanStatus").text("Please supply ethier a URL or a file");
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
+            $("#scanUrl").focus();
         } else if ((this.value.match(exp)) && $("#urlList").val() == "") {
             $("#scanStatus").text("");
             $("#scanStatus").removeClass('invisible');
@@ -369,6 +371,7 @@
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
+            $("#scanUrl").focus();
         } else if ($("#scanUrl").val() !== "" || $("#urlList").val() !== "") {
             var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             $.ajax({
@@ -407,10 +410,12 @@
                 }
             });
             $("#scanApplication").find("input[type=url], input[type=file]").val("");
+            $("#scanUrl").focus();
         } else {
             $("#scanStatus").text("Please supply an input.");
             $("#scanStatus").removeClass('invisible');
             $("#scanStatus").addClass('visible');
+            $("#scanUrl").focus();
         }
     });
 
@@ -434,10 +439,9 @@
                 'CSRF-Token': token
             },
             success: function(res) {
-                console.log(res);
                 if (res) {
                     $('#reportDeleteModal').modal('toggle');
-                    fetchScanHistory();
+                    fetchScanHistory(true);
                 }
             },
             error: function(err) {
@@ -497,7 +501,10 @@
         $("#minute").focus();
     });
 
-    function fetchScanHistory() {
+    function fetchScanHistory(bool) {
+        if (bool === undefined)
+            bool = false;
+
         scanHistoryCount = 1;
         $.ajax({
             url: "/fetch/scan/history",
@@ -516,7 +523,7 @@
                     $('.pagination-container-1').hide();
                 } else {
                     var currentPageNumber = parseInt($('.pagination-container-1').find('.active').text());
-                    if ($('#scanHistory tbody tr').length === 1){
+                    if ($('#scanHistory tbody tr').length === 1 && bool === true) {
                         currentPageNumber -= 1;
                     }
                     $('.pagination-container-1').pagination({
@@ -534,7 +541,7 @@
                     });
                     $("#scanHistory").show();
                     $('.pagination-container-1').show();
-                    $('.pagination-container-1').pagination('go', currentPageNumber)
+                    $('.pagination-container-1').pagination('go', currentPageNumber);
                 }
             },
             error: function(err) {
@@ -543,7 +550,9 @@
         });
     }
 
-    function scheduledHistory() {
+    function scheduledHistory(bool) {
+        if (bool === undefined)
+            bool = false;
         scheduleHistoryCount = 1;
         $.ajax({
             url: "/fetch/scheduled/history",
@@ -554,7 +563,16 @@
                 if (data.scheduled_scans.length === 0) {
                     $("#scheduleHistory").hide();
                     $('.pagination-container-2').hide();
+                } else if (data.scheduled_scans.length <= 10) {
+                    var html = template(data);
+                    $('#scheduleHistory').html(html);
+                    $("#scheduleHistory").show();
+                    $('.pagination-container-2').hide();
                 } else {
+                    var currentPageNumber = parseInt($('.pagination-container-2').find('.active').text());
+                    if ($('#scheduleHistory tbody tr').length === 1 && bool === true) {
+                        currentPageNumber -= 1;
+                    }
                     $('.pagination-container-2').pagination({
                         dataSource: data.scheduled_scans,
                         pageSize: 10,
@@ -569,11 +587,8 @@
                         }
                     });
                     $("#scheduleHistory").show();
-                    if (data.scheduled_scans.length < 10) {
-                        $('.pagination-container-2').hide();
-                    } else {
-                        $('.pagination-container-2').show();
-                    }
+                    $('.pagination-container-2').show();
+                    $('.pagination-container-2').pagination('go', currentPageNumber);
                 }
             },
             error: function(err) {
@@ -600,9 +615,9 @@
         $("#scanUrl").focus();
         fetchCsrfToken();
         fetchScanHistory();
-        setInterval(fetchScanHistory, 120000);
+        setInterval(fetchScanHistory, 180000);
         scheduledHistory();
-        setInterval(scheduledHistory, 120000);
+        setInterval(scheduledHistory, 180000);
     });
     </script>
 </body>
