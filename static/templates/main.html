@@ -438,37 +438,14 @@
                 if (res) {
                     $('#myModal').modal('toggle');
                     fetchScanHistory();
+                    //$('.pagination-container-1').pagination('go', 2)
                 }
             },
             error: function(err) {
                 console.error("Failed to delete the report: "+err);
             }
         });
-    })
-
-    /*$(document).on("click", "#scanHistory .delete-report", function(evt) {
-        evt.preventDefault();
-        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var hostname = $(this).data("hostname");
-        var timestamp = $(this).data("timestamp");
-        $(".modal-body").append("<input type='hidden' data-hostname="+hostname+" data-timestamp="+timestamp+" class='report-data'>");
-        $.ajax({
-            url: "/delete",
-            type: "POST",
-            data: "hostname=" + hostname + "&timestamp=" + timestamp,
-            headers: {
-                'CSRF-Token': token
-            },
-            success: function(res) {
-                console.log(res);
-                if (res)
-                    fetchScanHistory();
-            },
-            error: function(err) {
-                console.error(err);
-            }
-        });
-    });*/
+    });
 
     $("#scanScheduler").submit(function(evt) {
         evt.preventDefault();
@@ -525,6 +502,7 @@
         $.ajax({
             url: "/fetch/scan/history",
             type: "GET",
+            async: false,
             success: function(data) {
                 var source = document.getElementById('scan-history-template').innerHTML;
                 var template = Handlebars.compile(source);
