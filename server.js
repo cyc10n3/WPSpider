@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-04 20:24:27
+ * @Last Modified time: 2019-01-06 19:35:49
  */
 
 var express = require('express');
@@ -105,11 +105,15 @@ app.route('/login')
             if (username.toString() === appConfig.login_creds.username && password.toString() === appConfig.login_creds.password) {
                 req.session.user = username;
                 res.status(200).send(true);
+            } else if (username.toString().trim() === "" && password.toString().trim() === "") {
+                res.status(403).send("Please supply username and password.");
+            } else if (username.toString().trim() === "" || password.toString().trim() === "") {
+                res.status(403).send("Please supply both username and password.");
             } else {
-                res.status(403).send("Invalid username or password");
+                res.status(403).send("Invalid username or password.");
             }
         } else {
-            res.status(403).send("Request has been tampered");
+            res.status(403).send("Request has been tampered.");
         }
 
     });

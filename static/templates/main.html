@@ -50,7 +50,7 @@
 
     body #scanStatus {
         font-weight: bold;
-        min-height: 2rem;
+        min-height: 3rem;
     }
 
     #scanScheduler .col-sm-2 {
@@ -180,7 +180,7 @@
         <div id="scanStatus" class="text-center invisible">
         </div>
         <!-- Modal: Start -->
-        <div class="modal fade" id="myModal">
+        <div class="modal fade" id="reportDeleteModal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <input type='hidden' class='report-data'>
@@ -271,7 +271,7 @@
                                     <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="view-report">
                                         <i class="fa fa-eye" alt="view" title="view"></i>
                                     </a>
-                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#myModal" class="delete-report">
+                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#reportDeleteModal" class="delete-report">
                                         <i class="fa fa-trash" alt="delete" title="delete"></i>
                                     </a>
                                 </td>
@@ -414,18 +414,18 @@
         }
     });
 
-    $(document).on('shown.bs.modal', '#myModal', function(evt) {
+    $(document).on('shown.bs.modal', '#reportDeleteModal', function(evt) {
         var hostname = $(evt.relatedTarget).data('hostname');
         var timestamp = $(evt.relatedTarget).data('timestamp');
-        $("#myModal .report-data").data('hostname', hostname);
-        $("#myModal .report-data").data('timestamp', timestamp);
+        $("#reportDeleteModal .report-data").data('hostname', hostname);
+        $("#reportDeleteModal .report-data").data('timestamp', timestamp);
     });
 
-    $(document).on("click", "#myModal #deleteReport", function(evt) {
+    $(document).on("click", "#reportDeleteModal #deleteReport", function(evt) {
         evt.preventDefault();
         var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var hostname = $("#myModal .report-data").data('hostname');
-        var timestamp = $("#myModal .report-data").data('timestamp');
+        var hostname = $("#reportDeleteModal .report-data").data('hostname');
+        var timestamp = $("#reportDeleteModal .report-data").data('timestamp');
         $.ajax({
             url: "/delete",
             type: "POST",
@@ -436,13 +436,12 @@
             success: function(res) {
                 console.log(res);
                 if (res) {
-                    $('#myModal').modal('toggle');
+                    $('#reportDeleteModal').modal('toggle');
                     fetchScanHistory();
-                    //$('.pagination-container-1').pagination('go', 2)
                 }
             },
             error: function(err) {
-                console.error("Failed to delete the report: "+err);
+                console.error("Failed to delete the report: " + err);
             }
         });
     });
@@ -470,6 +469,7 @@
                         $('#scanScheduler .error-message').addClass('d-none');
                     }
                     $("#scanScheduler").find("input[type=url], input[type=text]").val("");
+                    scheduledHistory();
                 } catch (err) {
                     console.log("Failed to parse response");
                 }
@@ -509,7 +509,16 @@
                 if (data.scan_history.length === 0) {
                     $("#scanHistory").hide();
                     $(".pagination-container-1").hide();
+                } else if (data.scan_history.length <= 10) {
+                    var html = template(data);
+                    $('#scanHistory').html(html);
+                    $("#scanHistory").show();
+                    $('.pagination-container-1').hide();
                 } else {
+                    var currentPageNumber = parseInt($('.pagination-container-1').find('.active').text());
+                    if ($('#scanHistory tbody tr').length === 1){
+                        currentPageNumber -= 1;
+                    }
                     $('.pagination-container-1').pagination({
                         dataSource: data.scan_history,
                         pageSize: 10,
@@ -524,11 +533,8 @@
                         }
                     });
                     $("#scanHistory").show();
-                    if (data.scan_history.length < 10) {
-                        $('.pagination-container-1').hide();
-                    } else {
-                        $('.pagination-container-1').show();
-                    }
+                    $('.pagination-container-1').show();
+                    $('.pagination-container-1').pagination('go', currentPageNumber)
                 }
             },
             error: function(err) {
@@ -597,9 +603,6 @@
         setInterval(fetchScanHistory, 120000);
         scheduledHistory();
         setInterval(scheduledHistory, 120000);
-    });
-    $("document").on('click', '.reset', function() {
-        $(this).closest('form').find("input[type=text], textarea").val("");
     });
     </script>
 </body>
