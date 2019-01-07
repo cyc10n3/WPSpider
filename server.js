@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-06 19:35:49
+ * @Last Modified time: 2019-01-07 11:37:01
  */
 
 var express = require('express');
@@ -370,17 +370,17 @@ app.post("/schedule", function(req, res) {
                     var Url = url.parse(scanUrl, true);
                     valid = cron.validate(scheduleRule.trim());
                     if (valid) {
-                        let startTime = new Date();
-                        var schedule_details = { "rule": scheduleRule.trim(), "startTime": startTime, "scan_nubmer": ++currentCount, "hostname": Url.hostname, "Url": Url.href };
+                        let timestamp = new Date().getTime();;
+                        var schedule_details = { "rule": scheduleRule.trim(), "timestamp": timestamp, "hostname": Url.hostname, "Url": Url.href };
                         var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
                         obj.scheduled_scans.unshift(schedule_details);
-                        obj.total = currentCount;
+                        obj.total = ++currentCount;
                         fs.writeFileSync(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function() {
                             if (err) {
                                 console.log("Error: " + err);
                             }
                         });
-                        var task = schedule.scheduleJob({ start: startTime, rule: scheduleRule }, function() {
+                        var task = schedule.scheduleJob({ start: timestamp, rule: scheduleRule }, function() {
                             startScan(Url, res).then(function(result) {
                                 if (result)
                                     console.log("Scheduled scan completed successfully");
@@ -408,7 +408,7 @@ function reinitializeScheduledScans() {
     console.log("Re-initializing Scheduled Scans");
     var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
     for (let i = 0; i < obj.scheduled_scans.length; i++) {
-        var task = schedule.scheduleJob({ start: obj.scheduled_scans[i].startTime, rule: obj.scheduled_scans[i].rule }, function(data) {
+        var task = schedule.scheduleJob({ start: obj.scheduled_scans[i].timestamp, rule: obj.scheduled_scans[i].rule }, function(data) {
             startScan(url.parse(obj.scheduled_scans[i].Url, true)).then(function(result) {
                 if (result)
                     console.log("Scheduled scan completed successfully");
@@ -461,7 +461,7 @@ app.get("/fetch/scan/history", function(req, res) {
     }
 });
 
-app.post("/delete", function(req, res) {
+app.post("/delete/report", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
             var hostname = req.body.hostname;
@@ -490,6 +490,40 @@ app.post("/delete", function(req, res) {
                                         return res.status(200).send(true);
                                     }
                                 });
+                            }
+                        });
+                    }
+                }
+            } else {
+                return res.status(400).send("Request has been tampered");
+            }
+        } catch (err) {
+
+        }
+    }
+});
+
+app.post("/delete/schedule", function(req, res) {
+    if (req.session.user && req.cookies.user_sid) {
+        try {
+            var hostname = req.body.hostname;
+            var timestamp = req.body.timestamp;
+            if (hostname !== undefined && timestamp !== undefined) {
+                var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+                var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
+                var scheduledHistoryLength = scheduleHistoryList.length;
+                var i;
+                for (i = 0; i < scheduledHistoryLength; i++) {
+                    if (scheduleHistoryList[i].hostname === hostname && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
+                        // Schedule deletion logic
+                        scheduleHistoryObj.total -= 1;
+                        scheduleHistoryObj.scheduled_scans.splice(i, 1);
+                        fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
+                            if (err) {
+                                console.log("Failed to delete schedule.");
+                            } else {
+                                console.log("Schedule deleted successfully.");
+                                return res.status(200).send(true);
                             }
                         });
                     }

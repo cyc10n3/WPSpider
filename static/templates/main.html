@@ -88,7 +88,9 @@
     }
 
     #scanHistory .view-report,
-    #scanHistory .delete-report {
+    #scanHistory .delete-report,
+    #scheduleHistory .edit-schedule,
+    #scheduleHistory .delete-schedule {
         font-size: 1.5rem !important;
     }
 
@@ -179,7 +181,7 @@
         </form>
         <div id="scanStatus" class="text-center invisible">
         </div>
-        <!-- Modal: Start -->
+        <!-- Scan Modal: Start -->
         <div class="modal fade" id="reportDeleteModal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -199,7 +201,28 @@
                 </div>
             </div>
         </div>
-        <!-- Modal: End -->
+        <!-- Scan Modal: End -->
+        <!-- Schedule Modal: Start -->
+        <div class="modal fade" id="scheduleDeleteModal">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <input type='hidden' class='schedule-data'>
+                    <div class="modal-header font-weight-bold">Confirm Delete</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this schedule?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="deleteSchedule">Confirm</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Schedule Modal: End -->
         <div id="scanHistory" class="text-center">
         </div>
         <div class="pagination-container-1"></div>
@@ -291,6 +314,7 @@
                             <th scope="col">Hostname</th>
                             <th scope="col">Start Time</th>
                             <th scope="col">Rule</th>
+                            <th scope="col">Edit/Delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -298,8 +322,18 @@
                             <tr>
                                 <th scope="row" style="width:5%" class="align-middle">{{scheduleHistoryCounter}}</th>
                                 <td style="width:35%" class="align-middle">{{hostname}}</td>
-                                <td style="width:25%" class="align-middle">{{prettifyDate startTime}}</td>
-                                <td style="width:35%" class="align-middle">{{rule}}</td>
+                                <td style="width:25%" class="align-middle">{{prettifyDate timestamp}}</td>
+                                <td style="width:15%" class="align-middle">{{rule}}</td>
+                                <td style="width:20%" class="align-middle">
+                                <!--
+                                    <a href="javascript:void(0)"class="edit-schedule">
+                                        <i class="fa fa-pencil-square-o" title="edit"></i>
+                                    </a>
+                                 -->
+                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#scheduleDeleteModal" class="delete-schedule">
+                                        <i class="fa fa-trash" alt="delete" title="delete"></i>
+                                    </a>
+                                </td>
                             </tr>
                         {{/each}}
                     </tbody>
@@ -432,7 +466,7 @@
         var hostname = $("#reportDeleteModal .report-data").data('hostname');
         var timestamp = $("#reportDeleteModal .report-data").data('timestamp');
         $.ajax({
-            url: "/delete",
+            url: "/delete/report",
             type: "POST",
             data: "hostname=" + hostname + "&timestamp=" + timestamp,
             headers: {
@@ -446,6 +480,37 @@
             },
             error: function(err) {
                 console.error("Failed to delete the report: " + err);
+            }
+        });
+    });
+
+    $(document).on('shown.bs.modal', '#scheduleDeleteModal', function(evt) {
+        var hostname = $(evt.relatedTarget).data('hostname');
+        var timestamp = $(evt.relatedTarget).data('timestamp');
+        $("#scheduleDeleteModal .schedule-data").data('hostname', hostname);
+        $("#scheduleDeleteModal .schedule-data").data('timestamp', timestamp);
+    });
+
+    $(document).on("click", "#scheduleDeleteModal #deleteSchedule", function(evt) {
+        evt.preventDefault();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var hostname = $("#scheduleDeleteModal .schedule-data").data('hostname');
+        var timestamp = $("#scheduleDeleteModal .schedule-data").data('timestamp');
+        $.ajax({
+            url: "/delete/schedule",
+            type: "POST",
+            data: "hostname=" + hostname + "&timestamp=" + timestamp,
+            headers: {
+                'CSRF-Token': token
+            },
+            success: function(res) {
+                if (res) {
+                    $('#scheduleDeleteModal').modal('toggle');
+                    scheduledHistory(true);
+                }
+            },
+            error: function(err) {
+                console.error("Failed to delete the schedule: " + err);
             }
         });
     });
