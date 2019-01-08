@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-07 11:37:01
+ * @Last Modified time: 2019-01-08 12:31:45
  */
 
 var express = require('express');
@@ -44,6 +44,7 @@ app.use(express.static(__dirname + '/static/'));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(csrf({ cookie: true }));
 app.use(function(err, req, res, next) {
@@ -248,10 +249,10 @@ app.post('/scan', function(req, res) {
 });
 
 function startSingleScan(scanUrl, res) {
-    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname);
+    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '/ || :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname + ' || :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
@@ -259,7 +260,7 @@ function startSingleScan(scanUrl, res) {
         child = exec(cmd, null, function(error, stderr, stdout) {
             var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted !== undefined) {
-                console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname);
+                console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
                 try {
                     fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
                         if (err) throw err;
@@ -272,7 +273,7 @@ function startSingleScan(scanUrl, res) {
                 resolve(false);
             } else {
                 var result_details = {
-                    "hostname": scanUrl.hostname,
+                    "application_url": scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname,
                     "timestamp": timestamp,
                     "filename": filename
                 };
@@ -290,10 +291,10 @@ function startSingleScan(scanUrl, res) {
 }
 
 function startScan(scanUrl, res) {
-    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname);
+    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + '/ || :';
+    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname + ' || :';
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
@@ -301,7 +302,7 @@ function startScan(scanUrl, res) {
             try {
                 var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
                 if (resultObj.scan_aborted !== undefined) {
-                    console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname);
+                    console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
                     try {
                         fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
                             if (err) throw err;
@@ -312,13 +313,13 @@ function startScan(scanUrl, res) {
                     console.log("Reason: " + resultObj.scan_aborted);
                 } else {
                     var result_details = {
-                        "hostname": scanUrl.hostname,
+                        "application_url": scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname,
                         "timestamp": timestamp,
                         "filename": filename
                     };
                     var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
                     obj.scan_history.unshift(result_details);
-                    console.log("Scan successfully completed for: " + result_details.hostname);
+                    console.log("Scan successfully completed for: " + result_details.application_url);
                     try {
                         fs.writeFileSync(contextPath + "data/scan_history.json", JSON.stringify(obj), function(err) {
                             if (err) {
@@ -371,8 +372,25 @@ app.post("/schedule", function(req, res) {
                     valid = cron.validate(scheduleRule.trim());
                     if (valid) {
                         let timestamp = new Date().getTime();;
-                        var schedule_details = { "rule": scheduleRule.trim(), "timestamp": timestamp, "hostname": Url.hostname, "Url": Url.href };
+                        var schedule_details = {
+                            "rule": {
+                                "second": second.trim(),
+                                "minute": minute.trim(),
+                                "hour": hour.trim(),
+                                "day": day.trim(),
+                                "dayOfMonth": dayOfMonth.trim(),
+                                "dayOfWeek": dayOfWeek.trim()
+                            },
+                            "timestamp": timestamp,
+                            "application_url": Url.protocol + '//' + Url.hostname + Url.pathname
+                        };
                         var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+                        /*var scheduledScansList = obj.scheduled_scans;
+                        var scheduledScansListLen = scheduledScansList.length;
+                        var i;
+                        for (i = 0; i < scheduledScansListLen; i++) {
+                            if()
+                        }*/
                         obj.scheduled_scans.unshift(schedule_details);
                         obj.total = ++currentCount;
                         fs.writeFileSync(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function() {
@@ -422,15 +440,15 @@ reinitializeScheduledScans();
 app.get("/report", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
-            var hostname = req.query.hostname;
+            var application_url = req.query.application_url;
             var timestamp = req.query.timestamp;
-            if (hostname !== undefined && timestamp !== undefined) {
+            if (application_url !== undefined && timestamp !== undefined) {
                 var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
                 var i;
                 var objLen = obj.scan_history.length;
                 var scanHistory = obj.scan_history;
                 for (i = 0; i < objLen; i++) {
-                    if (scanHistory[i].hostname == hostname && scanHistory[i].timestamp == timestamp) {
+                    if (scanHistory[i].application_url == application_url && scanHistory[i].timestamp == timestamp) {
                         var objResult = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + scanHistory[i].filename, 'utf8'));
                         res.send(objResult);
                         res.end();
@@ -464,15 +482,15 @@ app.get("/fetch/scan/history", function(req, res) {
 app.post("/delete/report", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
-            var hostname = req.body.hostname;
+            var application_url = req.body.application_url;
             var timestamp = req.body.timestamp;
-            if (hostname !== undefined && timestamp !== undefined) {
+            if (application_url !== undefined && timestamp !== undefined) {
                 var historyObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
                 var scanHistoryList = historyObj.scan_history;
                 var historyLength = scanHistoryList.length;
                 var i;
                 for (i = 0; i < historyLength; i++) {
-                    if (scanHistoryList[i].hostname === hostname && scanHistoryList[i].timestamp === parseInt(timestamp)) {
+                    if (scanHistoryList[i].application_url === application_url && scanHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Report deletion logic
                         var j = i;
                         fs.unlink(contextPath + "data/scan_results/" + scanHistoryList[i].filename, (err) => {
@@ -506,15 +524,15 @@ app.post("/delete/report", function(req, res) {
 app.post("/delete/schedule", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         try {
-            var hostname = req.body.hostname;
+            var application_url = req.body.application_url;
             var timestamp = req.body.timestamp;
-            if (hostname !== undefined && timestamp !== undefined) {
+            if (application_url !== undefined && timestamp !== undefined) {
                 var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
                 var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
                 var scheduledHistoryLength = scheduleHistoryList.length;
                 var i;
                 for (i = 0; i < scheduledHistoryLength; i++) {
-                    if (scheduleHistoryList[i].hostname === hostname && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
+                    if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Schedule deletion logic
                         scheduleHistoryObj.total -= 1;
                         scheduleHistoryObj.scheduled_scans.splice(i, 1);
@@ -523,6 +541,40 @@ app.post("/delete/schedule", function(req, res) {
                                 console.log("Failed to delete schedule.");
                             } else {
                                 console.log("Schedule deleted successfully.");
+                                return res.status(200).send(true);
+                            }
+                        });
+                    }
+                }
+            } else {
+                return res.status(400).send("Request has been tampered");
+            }
+        } catch (err) {
+
+        }
+    }
+});
+
+
+app.post("/edit/schedule", function(req, res) {
+    if (req.session.user && req.cookies.user_sid) {
+        try {
+            var application_url = req.body.application_url;
+            var timestamp = req.body.timestamp;
+            if (application_url !== undefined && timestamp !== undefined) {
+                var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+                var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
+                var scheduledHistoryLength = scheduleHistoryList.length;
+                var i;
+                for (i = 0; i < scheduledHistoryLength; i++) {
+                    if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
+                        // Schedule edit logic
+                        scheduleHistoryList[i].rule = req.body.rule;
+                        fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
+                            if (err) {
+                                console.log("Failed to edit schedule.");
+                            } else {
+                                console.log("Schedule edited successfully.");
                                 return res.status(200).send(true);
                             }
                         });

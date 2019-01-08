@@ -227,10 +227,10 @@
         return domain_name;
     });
     var url = new URL(location.href);
-    var hostname = url.searchParams.get("hostname");;
+    var application_url = url.searchParams.get("application_url");;
     var timestamp = url.searchParams.get("timestamp");
     $.ajax({
-        url: "/report?hostname=" + hostname + "&timestamp=" + timestamp,
+        url: "/report?application_url=" + application_url + "&timestamp=" + timestamp,
         type: "GET",
         success: function(data, textStatus, xhr) {
             if ($.isPlainObject(data)) {

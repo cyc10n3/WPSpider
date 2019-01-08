@@ -162,6 +162,10 @@
     .paginationjs {
         display: inline-block;
     }
+
+    #scheduleEditModal .modal-body .row label {
+        min-height: 50%;
+    }
     </style>
 </head>
 
@@ -181,7 +185,7 @@
         </form>
         <div id="scanStatus" class="text-center invisible">
         </div>
-        <!-- Scan Modal: Start -->
+        <!-- Delete Report Modal: Start -->
         <div class="modal fade" id="reportDeleteModal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -201,8 +205,8 @@
                 </div>
             </div>
         </div>
-        <!-- Scan Modal: End -->
-        <!-- Schedule Modal: Start -->
+        <!-- Delete Report Modal: End -->
+        <!-- Delete Schedule Modal: Start -->
         <div class="modal fade" id="scheduleDeleteModal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -222,7 +226,54 @@
                 </div>
             </div>
         </div>
-        <!-- Schedule Modal: End -->
+        <!-- Delete Schedule Modal: End -->
+        <!-- Edit Schedule Modal: Start -->
+        <div class="modal fade" id="scheduleEditModal">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header font-weight-bold">Edit Schedule</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <label for="second" class="font-weight-bold">Second (optional)</label>
+                                <input type="text" name="second" id="editSecond" class="form-control">
+                            </div>
+                            <div class="col-sm-2">
+                                <label for="minute" class="font-weight-bold">Minute</label>
+                                <input type="text" required name="minute" id="editMinute" class="form-control">
+                            </div>
+                            <div class="col-sm-2">
+                                <label for="hour" class="font-weight-bold">Hour</label>
+                                <input type="text" required name="hour" id="editHour" class="form-control">
+                            </div>
+                            <div class="col-sm-2">
+                                <label for="day" class="font-weight-bold">Day</label>
+                                <input type="text" required name="day" id="editDay" class="form-control">
+                            </div>
+                            <div class="col-sm-2">
+                                <label for="dayOfMonth" class="font-weight-bold">Day of Month</label>
+                                <input type="text" required name="dayOfMonth" id="editDayOfMonth" class="form-control">
+                            </div>
+                            <div class="col-sm-2">
+                                <label for="dayOfWeek" class="font-weight-bold">Day of Week</label>
+                                <input type="text" required name="dayOfWeek" id="editDayOfWeek" class="form-control">
+                            </div>
+                            <input type="hidden" id="editScheduleUrl">
+                            <input type="hidden" id="editTimestamp">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="editSchedule">Save</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Edit Schedule Modal: End -->
         <div id="scanHistory" class="text-center">
         </div>
         <div class="pagination-container-1"></div>
@@ -260,7 +311,7 @@
             </div>
             <br>
             <div class="row">
-                <input type="submit" value="Schedule Scan" class="btn btn-primary col-sm-2">
+                <input type="submit" value="Schedule" class="btn btn-primary col-sm-2">
             </div>
             <br>
             <div class="row text-left">
@@ -279,22 +330,22 @@
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">Hostname</th>
+                            <th scope="col">Application URL</th>
                             <th scope="col">Start Time</th>
-                            <th scope="col">Report</th>
+                            <th scope="col">Report (View/Delete)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#each scan_history}}
                             <tr>
                                 <th scope="row" style="width:5%" class="align-middle">{{scanHistoryCounter}}</th>
-                                <td style="width:35%" class="align-middle">{{hostname}}</td>
+                                <td style="width:35%" class="align-middle">{{application_url}}</td>
                                 <td style="width:35%" class="align-middle">{{prettifyDate timestamp}}</td>
                                 <td style="width:25%" class="align-middle">
-                                    <a href="templates/report.html?hostname={{hostname}}&timestamp={{timestamp}}" target="_blank" class="view-report">
+                                    <a href="templates/report.html?application_url={{application_url}}&timestamp={{timestamp}}" target="_blank" class="view-report">
                                         <i class="fa fa-eye" alt="view" title="view"></i>
                                     </a>
-                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#reportDeleteModal" class="delete-report">
+                                    <a href="javascript:void(0)" data-application_url={{application_url}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#reportDeleteModal" class="delete-report">
                                         <i class="fa fa-trash" alt="delete" title="delete"></i>
                                     </a>
                                 </td>
@@ -311,7 +362,7 @@
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">Hostname</th>
+                            <th scope="col">Application URL</th>
                             <th scope="col">Start Time</th>
                             <th scope="col">Rule</th>
                             <th scope="col">Edit/Delete</th>
@@ -321,16 +372,14 @@
                         {{#each scheduled_scans}}
                             <tr>
                                 <th scope="row" style="width:5%" class="align-middle">{{scheduleHistoryCounter}}</th>
-                                <td style="width:35%" class="align-middle">{{hostname}}</td>
+                                <td style="width:35%" class="align-middle">{{application_url}}</td>
                                 <td style="width:25%" class="align-middle">{{prettifyDate timestamp}}</td>
-                                <td style="width:15%" class="align-middle">{{rule}}</td>
+                                <td style="width:15%" class="align-middle">{{rule.second}} {{rule.minute}} {{rule.hour}} {{rule.day}} {{rule.dayOfMonth}} {{rule.dayOfWeek}}</td>
                                 <td style="width:20%" class="align-middle">
-                                <!--
-                                    <a href="javascript:void(0)"class="edit-schedule">
+                                    <a href="javascript:void(0)" data-application_url="{{application_url}}" data-rule-second="{{rule.second}}" data-rule-minute="{{rule.minute}}" data-rule-hour="{{rule.hour}}" data-rule-day="{{rule.day}}" data-rule-dayOfMonth="{{rule.dayOfMonth}}" data-rule-dayOfWeek="{{rule.dayOfWeek}}" data-toggle="modal" data-target="#scheduleEditModal" data-timestamp="{{timestamp}}" class="edit-schedule">
                                         <i class="fa fa-pencil-square-o" title="edit"></i>
                                     </a>
-                                 -->
-                                    <a href="javascript:void(0)" data-hostname={{hostname}} data-timestamp={{timestamp}} data-toggle="modal" data-target="#scheduleDeleteModal" class="delete-schedule">
+                                    <a href="javascript:void(0)" data-application_url="{{application_url}}" data-timestamp="{{timestamp}}" data-toggle="modal" data-target="#scheduleDeleteModal" class="delete-schedule">
                                         <i class="fa fa-trash" alt="delete" title="delete"></i>
                                     </a>
                                 </td>
@@ -454,21 +503,21 @@
     });
 
     $(document).on('shown.bs.modal', '#reportDeleteModal', function(evt) {
-        var hostname = $(evt.relatedTarget).data('hostname');
+        var application_url = $(evt.relatedTarget).data('application_url');
         var timestamp = $(evt.relatedTarget).data('timestamp');
-        $("#reportDeleteModal .report-data").data('hostname', hostname);
+        $("#reportDeleteModal .report-data").data('application_url', application_url);
         $("#reportDeleteModal .report-data").data('timestamp', timestamp);
     });
 
     $(document).on("click", "#reportDeleteModal #deleteReport", function(evt) {
         evt.preventDefault();
         var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var hostname = $("#reportDeleteModal .report-data").data('hostname');
+        var application_url = $("#reportDeleteModal .report-data").data('application_url');
         var timestamp = $("#reportDeleteModal .report-data").data('timestamp');
         $.ajax({
             url: "/delete/report",
             type: "POST",
-            data: "hostname=" + hostname + "&timestamp=" + timestamp,
+            data: "application_url=" + application_url + "&timestamp=" + timestamp,
             headers: {
                 'CSRF-Token': token
             },
@@ -480,37 +529,6 @@
             },
             error: function(err) {
                 console.error("Failed to delete the report: " + err);
-            }
-        });
-    });
-
-    $(document).on('shown.bs.modal', '#scheduleDeleteModal', function(evt) {
-        var hostname = $(evt.relatedTarget).data('hostname');
-        var timestamp = $(evt.relatedTarget).data('timestamp');
-        $("#scheduleDeleteModal .schedule-data").data('hostname', hostname);
-        $("#scheduleDeleteModal .schedule-data").data('timestamp', timestamp);
-    });
-
-    $(document).on("click", "#scheduleDeleteModal #deleteSchedule", function(evt) {
-        evt.preventDefault();
-        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var hostname = $("#scheduleDeleteModal .schedule-data").data('hostname');
-        var timestamp = $("#scheduleDeleteModal .schedule-data").data('timestamp');
-        $.ajax({
-            url: "/delete/schedule",
-            type: "POST",
-            data: "hostname=" + hostname + "&timestamp=" + timestamp,
-            headers: {
-                'CSRF-Token': token
-            },
-            success: function(res) {
-                if (res) {
-                    $('#scheduleDeleteModal').modal('toggle');
-                    scheduledHistory(true);
-                }
-            },
-            error: function(err) {
-                console.error("Failed to delete the schedule: " + err);
             }
         });
     });
@@ -565,6 +583,105 @@
         });
         $("#minute").focus();
     });
+
+    $(document).on('shown.bs.modal', '#scheduleDeleteModal', function(evt) {
+        var application_url = $(evt.relatedTarget).data('application_url');
+        var timestamp = $(evt.relatedTarget).data('timestamp');
+        $("#scheduleDeleteModal .schedule-data").data('application_url', application_url);
+        $("#scheduleDeleteModal .schedule-data").data('timestamp', timestamp);
+    });
+
+    $(document).on("click", "#scheduleDeleteModal #deleteSchedule", function(evt) {
+        evt.preventDefault();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var application_url = $("#scheduleDeleteModal .schedule-data").data('application_url');
+        var timestamp = $("#scheduleDeleteModal .schedule-data").data('timestamp');
+        $.ajax({
+            url: "/delete/schedule",
+            type: "POST",
+            data: "application_url=" + application_url + "&timestamp=" + timestamp,
+            headers: {
+                'CSRF-Token': token
+            },
+            success: function(res) {
+                if (res) {
+                    $('#scheduleDeleteModal').modal('toggle');
+                    scheduledHistory(true);
+                }
+            },
+            error: function(err) {
+                console.error("Failed to delete the schedule: " + err);
+            }
+        });
+    });
+
+    $(document).on("click", "#scheduleHistory .edit-schedule", function(evt) {
+        evt.preventDefault();
+        var second = $(this).data('rule-second');
+        var minute = $(this).data('rule-minute');
+        var hour = $(this).data('rule-hour');
+        var day = $(this).data('rule-day');
+        var dayOfMonth = $(this).data('rule-dayofmonth');
+        var dayOfWeek = $(this).data('rule-dayofweek');
+        var application_url = $(this).data('application_url');
+        var timestamp = $(this).data('timestamp');
+        $("#scheduleEditModal #editSecond").val(second);
+        $("#scheduleEditModal #editMinute").val(minute);
+        $("#scheduleEditModal #editHour").val(hour);
+        $("#scheduleEditModal #editDay").val(day);
+        $("#scheduleEditModal #editDayOfMonth").val(dayOfMonth);
+        $("#scheduleEditModal #editDayOfWeek").val(dayOfWeek);
+        $("#scheduleEditModal #editScheduleUrl").val(application_url);
+        $("#scheduleEditModal #editTimestamp").val(timestamp);
+    });
+
+    $(document).on('shown.bs.modal', '#scheduleEditModal', function(evt) {
+        $("#scheduleEditModal #editSecond").focus();
+    });
+
+    $(document).on('click', '#scheduleEditModal #editSchedule', function(evt) {
+        evt.preventDefault();
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var second = $("#scheduleEditModal #editSecond").val();
+        var minute = $("#scheduleEditModal #editMinute").val();
+        var hour = $("#scheduleEditModal #editHour").val();
+        var day = $("#scheduleEditModal #editDay").val();
+        var dayOfMonth = $("#scheduleEditModal #editDayOfMonth").val();
+        var dayOfWeek = $("#scheduleEditModal #editDayOfWeek").val();
+        var application_url = $("#scheduleEditModal #editScheduleUrl").val();
+        var timestamp = $("#scheduleEditModal #editTimestamp").val();
+        var ajaxData = {
+            "rule": {
+                "second": second,
+                "minute": minute,
+                "hour": hour,
+                "day": day,
+                "dayOfMonth": dayOfMonth,
+                "dayOfWeek": dayOfWeek
+            },
+            "timestamp": timestamp,
+            "application_url": application_url
+        };
+        $.ajax({
+            url: "/edit/schedule",
+            type: "POST",
+            data: JSON.stringify(ajaxData),
+            contentType: "application/json",
+            headers: {
+                'CSRF-Token': token
+            },
+            success: function(res) {
+                if (res) {
+                    $('#scheduleEditModal').modal('toggle');
+                    scheduledHistory(true);
+                }
+            },
+            error: function(err) {
+                console.log("Failed to edit schedule: " + err);
+            }
+        });
+    });
+
 
     function fetchScanHistory(bool) {
         if (bool === undefined)
