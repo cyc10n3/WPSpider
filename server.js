@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-08 12:31:45
+ * @Last Modified time: 2019-01-09 00:03:02
  */
 
 var express = require('express');
@@ -371,7 +371,13 @@ app.post("/schedule", function(req, res) {
                     var Url = url.parse(scanUrl, true);
                     valid = cron.validate(scheduleRule.trim());
                     if (valid) {
-                        let timestamp = new Date().getTime();;
+                        let timestamp = new Date().getTime();
+                        var task = schedule.scheduleJob({ start: timestamp, rule: scheduleRule }, function() {
+                            startScan(Url, res).then(function(result) {
+                                if (result)
+                                    console.log("Scheduled scan completed successfully");
+                            });
+                        });
                         var schedule_details = {
                             "rule": {
                                 "second": second.trim(),
@@ -382,27 +388,16 @@ app.post("/schedule", function(req, res) {
                                 "dayOfWeek": dayOfWeek.trim()
                             },
                             "timestamp": timestamp,
-                            "application_url": Url.protocol + '//' + Url.hostname + Url.pathname
+                            "application_url": Url.protocol + '//' + Url.hostname + Url.pathname,
+                            "task": task
                         };
                         var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-                        /*var scheduledScansList = obj.scheduled_scans;
-                        var scheduledScansListLen = scheduledScansList.length;
-                        var i;
-                        for (i = 0; i < scheduledScansListLen; i++) {
-                            if()
-                        }*/
                         obj.scheduled_scans.unshift(schedule_details);
                         obj.total = ++currentCount;
                         fs.writeFileSync(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function() {
                             if (err) {
                                 console.log("Error: " + err);
                             }
-                        });
-                        var task = schedule.scheduleJob({ start: timestamp, rule: scheduleRule }, function() {
-                            startScan(Url, res).then(function(result) {
-                                if (result)
-                                    console.log("Scheduled scan completed successfully");
-                            });
                         });
                         return res.status(200).send('{"message":"Scan has been scheduled successfully.","status":"success"}');
                     } else {
@@ -423,16 +418,26 @@ app.post("/schedule", function(req, res) {
 });
 
 function reinitializeScheduledScans() {
-    console.log("Re-initializing Scheduled Scans");
+    console.log("Re-initializing Scheduled Scans...");
     var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-    for (let i = 0; i < obj.scheduled_scans.length; i++) {
-        var task = schedule.scheduleJob({ start: obj.scheduled_scans[i].timestamp, rule: obj.scheduled_scans[i].rule }, function(data) {
-            startScan(url.parse(obj.scheduled_scans[i].Url, true)).then(function(result) {
+    for (let i = 0; i < obj.scheduled_scans.length; i++) {  // Don't change let to var
+        var timestamp = new Date(obj.scheduled_scans[i].timestamp);
+        var rule = obj.scheduled_scans[i].rule.second + " " + obj.scheduled_scans[i].rule.minute + " " + obj.scheduled_scans[i].rule.hour + " " + obj.scheduled_scans[i].rule.day + " " + obj.scheduled_scans[i].rule.dayOfMonth + " " + obj.scheduled_scans[i].rule.dayOfWeek;
+        var task = schedule.scheduleJob({ start: timestamp, rule: rule.trim() }, function(data) {
+            startScan(url.parse(obj.scheduled_scans[i].application_url, true)).then(function(result) {
                 if (result)
                     console.log("Scheduled scan completed successfully");
             });
         });
+        obj.scheduled_scans[i].task = task;
     }
+    fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function(err) {
+        if (err) {
+            console.log("Failed to updated task details.");
+        } else {
+            console.log("Task details updated successfully.");
+        }
+    });
 }
 
 reinitializeScheduledScans();
@@ -569,11 +574,16 @@ app.post("/edit/schedule", function(req, res) {
                 for (i = 0; i < scheduledHistoryLength; i++) {
                     if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Schedule edit logic
-                        scheduleHistoryList[i].rule = req.body.rule;
+                        scheduledTask = scheduleHistoryList[i];
+                        scheduledTask.rule = req.body.rule;
+                        scheduledTask.timestamp = new Date().getTime();
                         fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
                             if (err) {
                                 console.log("Failed to edit schedule.");
+                                return res.status(400).send("Failed to edit schedule.");
                             } else {
+                                var rule = scheduledTask.rule.second + " " + scheduledTask.rule.minute + " " + scheduledTask.rule.hour + " " + scheduledTask.rule.day + " " + scheduledTask.rule.dayOfMonth + " " + scheduledTask.rule.dayOfWeek;
+                                var resche = schedule.scheduledJobs[scheduledTask.task.name].reschedule({ start: scheduledTask.timestamp, rule: rule });
                                 console.log("Schedule edited successfully.");
                                 return res.status(200).send(true);
                             }
@@ -581,7 +591,7 @@ app.post("/edit/schedule", function(req, res) {
                     }
                 }
             } else {
-                return res.status(400).send("Request has been tampered");
+                return res.status(400).send("Request has been tampered.");
             }
         } catch (err) {
 
