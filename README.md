@@ -3,12 +3,12 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 1. Login Page-
     * Authentication is required to access the application.
 2. Dashboard Page-
-    * On Demand Scan          : Run scans instantly by either providing a URL or a text file having multiple URL's seprated by a new line.
-    * Scan History            : A user can view or delete scan history and reports.
-    * Schedule Scan           : A user can schedule scans just like a cron job in linux.
-    * Scheduled Scan History  : A user can edit cron rule or delete the scheduled scan.
+    * On Demand Scan          : Run scans instantly by either providing a URL or a text file having multiple URL's seprated by a new line as an input.
+    * Scan History            : View or delete scan history and reports.
+    * Schedule Scan           : Configure scans to run automatically, or on a recurring basis just like a cron job in linux.
+    * Scheduled Scan History  : Edit cron rule or delete any scheduled scan.
 3. Report Page-
-    * View or print the scan report.
+    * View or print the details of vulnerabilities discovered after scan completes.
 
 ## Key Features
 
