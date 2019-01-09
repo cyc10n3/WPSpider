@@ -1,5 +1,14 @@
 # WPScan Web Interface (beta version)
-A centralized dashboard for running and scheduling WordPress scans powered by wpscan utility. It also offers to view/delete scan history and result in user-friendly form.
+A centralized dashboard for running and scheduling WordPress scans powered by wpscan utility. It has following features:
+1. Login Page-
+    * Authentication is required to access the application.
+2. Dashboard Page-
+    * On Demand Scan          : Run scans instantly by either providing a URL or a text file having multiple URL's seprated by a new line.
+    * Scan History            : A user can view or delete the scan history.
+    * Schedule Scan           : A user can schedule a scan like a cron job in linux.
+    * Scheduled Scan History  : A user can edit cron rule or delete the scheduled scan.
+3. Report Page-
+    * View or print the scan report.
 
 ## Key Features
 
