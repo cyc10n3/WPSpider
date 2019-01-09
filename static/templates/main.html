@@ -166,6 +166,10 @@
     #scheduleEditModal .modal-body .row label {
         min-height: 50%;
     }
+
+    #scheduleEditModal .edit-schedule-error {
+        padding: 0 2%;
+    }
     </style>
 </head>
 
@@ -264,6 +268,10 @@
                             </div>
                             <input type="hidden" id="editScheduleUrl">
                             <input type="hidden" id="editTimestamp">
+                        </div><br>
+                        <div class="row edit-schedule-error">
+                            <span class="d-none alert alert-danger">
+                            </span>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -672,12 +680,18 @@
             },
             success: function(res) {
                 if (res) {
+                    $(".edit-schedule-error span").addClass("d-none");
                     $('#scheduleEditModal').modal('toggle');
                     scheduledHistory(true);
                 }
             },
             error: function(err) {
-                console.log("Failed to edit schedule: " + err);
+                if (err.status === 400) {
+                    $(".edit-schedule-error span").html(err.responseText);
+                    $(".edit-schedule-error span").removeClass("d-none");
+                } else {
+                    console.log("Failed to edit schedule: " + err);
+                }
             }
         });
     });

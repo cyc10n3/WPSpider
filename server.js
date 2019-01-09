@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-09 00:03:02
+ * @Last Modified time: 2019-01-09 11:45:26
  */
 
 var express = require('express');
@@ -420,7 +420,7 @@ app.post("/schedule", function(req, res) {
 function reinitializeScheduledScans() {
     console.log("Re-initializing Scheduled Scans...");
     var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-    for (let i = 0; i < obj.scheduled_scans.length; i++) {  // Don't change let to var
+    for (let i = 0; i < obj.scheduled_scans.length; i++) { // Don't change let to var
         var timestamp = new Date(obj.scheduled_scans[i].timestamp);
         var rule = obj.scheduled_scans[i].rule.second + " " + obj.scheduled_scans[i].rule.minute + " " + obj.scheduled_scans[i].rule.hour + " " + obj.scheduled_scans[i].rule.day + " " + obj.scheduled_scans[i].rule.dayOfMonth + " " + obj.scheduled_scans[i].rule.dayOfWeek;
         var task = schedule.scheduleJob({ start: timestamp, rule: rule.trim() }, function(data) {
@@ -577,17 +577,27 @@ app.post("/edit/schedule", function(req, res) {
                         scheduledTask = scheduleHistoryList[i];
                         scheduledTask.rule = req.body.rule;
                         scheduledTask.timestamp = new Date().getTime();
-                        fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
-                            if (err) {
-                                console.log("Failed to edit schedule.");
-                                return res.status(400).send("Failed to edit schedule.");
-                            } else {
-                                var rule = scheduledTask.rule.second + " " + scheduledTask.rule.minute + " " + scheduledTask.rule.hour + " " + scheduledTask.rule.day + " " + scheduledTask.rule.dayOfMonth + " " + scheduledTask.rule.dayOfWeek;
-                                var resche = schedule.scheduledJobs[scheduledTask.task.name].reschedule({ start: scheduledTask.timestamp, rule: rule });
-                                console.log("Schedule edited successfully.");
-                                return res.status(200).send(true);
+                        var rule = scheduledTask.rule.second + " " + scheduledTask.rule.minute + " " + scheduledTask.rule.hour + " " + scheduledTask.rule.day + " " + scheduledTask.rule.dayOfMonth + " " + scheduledTask.rule.dayOfWeek;
+                        var valid = cron.validate(rule);
+                        if (valid) {
+                            try {
+                                fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
+                                    if (err) {
+                                        console.log("Failed to edit schedule. Reason: " + err);
+                                        return res.status(400).send("Failed to edit schedule.");
+                                    } else {
+                                        var resche = schedule.scheduledJobs[scheduledTask.task.name].reschedule({ start: scheduledTask.timestamp, rule: rule });
+                                        console.log("Schedule edited successfully.");
+                                        return res.status(200).send(true);
+                                    }
+                                });
+                            } catch (err) {
+                                console.log("Failed to open/edit scheduled_scans.json file.");
+                                return res.status(400).send("Failed to update scheduled scans.");
                             }
-                        });
+                        } else {
+                            return res.status(400).send("Please enter a valid cron expression.");
+                        }
                     }
                 }
             } else {
