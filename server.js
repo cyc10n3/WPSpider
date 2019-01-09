@@ -2,7 +2,7 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-09 14:54:04
+ * @Last Modified time: 2019-01-09 16:01:42
  */
 
 var express = require("express");
@@ -544,10 +544,11 @@ app.post("/delete/schedule", function(req, res) {
                 var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", "utf8"));
                 var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
                 var scheduledHistoryLength = scheduleHistoryList.length;
-                var i;
+                var i, deleted;
                 for (i = 0; i < scheduledHistoryLength; i++) {
                     if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Schedule deletion logic
+                        deleted = schedule.scheduledJobs[scheduleHistoryList[i].task.name].cancel();
                         scheduleHistoryObj.total -= 1;
                         scheduleHistoryObj.scheduled_scans.splice(i, 1);
                         fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
