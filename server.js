@@ -2,35 +2,32 @@
  * @Author: Gaurav Mishra
  * @Date:   2018-12-30 19:15:04
  * @Last Modified by:   Gaurav Mishra
- * @Last Modified time: 2019-01-09 11:45:26
+ * @Last Modified time: 2019-01-09 14:54:04
  */
 
-var express = require('express');
+var express = require("express");
 var app = express();
-var url = require('url');
-var fs = require('fs');
-var bodyParser = require('body-parser');
-var exec = require('child_process').exec;
-var multiparty = require('multiparty');
-var validUrl = require('valid-url');
-var Promise = require('bluebird');
-const https = require('https');
-var cron = require('node-cron');
-var schedule = require('node-schedule');
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var helmet = require('helmet');
-var csrf = require('csurf')
-
+var url = require("url");
+var fs = require("fs");
+var bodyParser = require("body-parser");
+var exec = require("child_process").exec;
+var multiparty = require("multiparty");
+var validUrl = require("valid-url");
+var Promise = require("bluebird");
+var https = require("https");
+var cron = require("node-cron");
+var schedule = require("node-schedule");
+var cookieParser = require("cookie-parser");
+var session = require("express-session");
+var helmet = require("helmet");
+var csrf = require("csurf");
 var contextPath = "./";
-
-/* 
+/*
 Certificate and Key generation commands:
 ========================================
 openssl genrsa -out ssl/localhost.key 2048
 openssl req -new -x509 -key ssl/localhost.key -out ssl/localhost.cert -days 3650 -subj /CN=localhost
 */
-
 var options = {
     key: fs.readFileSync(contextPath + "ssl/localhost.key"),
     cert: fs.readFileSync(contextPath + "ssl/localhost.cert"),
@@ -38,9 +35,12 @@ var options = {
     rejectUnauthorized: false
 };
 var server = https.createServer(options, app);
+var hour = 3600000;
+
+
 app.use(helmet());
-app.disable('x-powered-by');
-app.use(express.static(__dirname + '/static/'));
+app.disable("x-powered-by");
+app.use(express.static(__dirname + "/static/"));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -48,23 +48,27 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(csrf({ cookie: true }));
 app.use(function(err, req, res, next) {
-    if (err.code !== 'EBADCSRFTOKEN') return next(err);
-
+    if (err.code !== "EBADCSRFTOKEN") {
+        return next(err);
+    }
     // handle CSRF token errors here
     res.status(403);
-    res.send('Invalid CSRF Token. Please refresh the page.');
-})
-
-server.listen(1337, function() {
-    console.log('Server has started listening on port ' + 1337);
+    res.send("Invalid CSRF Token. Please refresh the page.");
 });
 
-var appConfig = JSON.parse(fs.readFileSync(contextPath + "config.json", "utf8"));
+server.listen(1337, function() {
+    console.log("Server has started listening on port " + 1337);
+});
+try {
+    var appConfig = JSON.parse(fs.readFileSync(contextPath + "config.json", "utf8"));
+} catch (err) {
+    console.log("Error reading application configuration file. Exiting...");
+    process.exit(1);
+}
 
 // initialize express-session to allow us track the logged-in user across sessions.
-var hour = 3600000;
 app.use(session({
-    key: 'user_sid',
+    key: "user_sid",
     secret: appConfig.session_secret,
     resave: true,
     saveUninitialized: true,
@@ -78,30 +82,30 @@ app.use(session({
 
 // This middleware will check if user's cookie is still saved in browser and user is not set, then automatically log the user out.
 // This usually happens when you stop your express server after login, your cookie still remains saved in the browser.
-app.use((req, res, next) => {
+app.use(function(req, res, next) {
     if (req.cookies.user_sid && !req.session.user) {
-        res.clearCookie('user_sid');
+        res.clearCookie("user_sid");
     }
     next();
 });
 
 // middleware function to check for logged-in users
-var sessionChecker = (req, res, next) => {
+var sessionChecker = function(req, res, next) {
     if (req.session.user && req.cookies.user_sid) {
-        res.redirect('/main');
+        res.redirect("/main");
     } else {
         res.redirect("/login");
     }
 };
 
 // route for user Login
-app.route('/login')
-    .get((req, res) => {
-        res.sendFile(__dirname + '/static/templates/login.html');
+app.route("/login")
+    .get(function(req, res) {
+        res.sendFile(__dirname + "/static/templates/login.html");
     })
-    .post((req, res) => {
-        var username = req.body.username,
-            password = req.body.password;
+    .post(function(req, res) {
+        var username = req.body.username;
+        var password = req.body.password;
         if (username !== undefined && password !== undefined) {
             if (username.toString() === appConfig.login_creds.username && password.toString() === appConfig.login_creds.password) {
                 req.session.user = username;
@@ -120,75 +124,74 @@ app.route('/login')
     });
 
 // route for user logout
-app.get('/logout', (req, res) => {
+app.get("/logout", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         req.session.destroy();
-        res.clearCookie('user_sid');
-        res.redirect('/login');
+        res.clearCookie("user_sid");
+        res.redirect("/login");
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
-app.get('/', sessionChecker, function(req, res) {
+app.get("/", sessionChecker, function(req, res) {
     fs.readFile("static/templates/login.html", function(err, data) {
         if (err) {
             res.writeHead(404, {
-                'Content-Type': 'text/html'
+                "Content-Type": "text/html"
             });
             return res.end("404 Not Found");
         }
         res.writeHead(200, {
-            'Content-Type': 'text/html'
+            "Content-Type": "text/html"
         });
         res.write(data);
         return res.end();
     });
 });
 
-app.get('/csrfToken', function(req, res) {
+app.get("/csrfToken", function(req, res) {
     return res.status(200).send({ csrfToken: req.csrfToken() });
 });
 
 var child;
 
-app.get('/main', function(req, res) {
+app.get("/main", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         fs.readFile("static/templates/main.html", function(err, data) {
             if (err) {
                 res.writeHead(404, {
-                    'Content-Type': 'text/html'
+                    "Content-Type": "text/html"
                 });
                 return res.end("404 Not Found");
             }
             res.writeHead(200, {
-                'Content-Type': 'text/html'
+                "Content-Type": "text/html"
             });
             res.write(data);
             return res.end();
         });
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
 
-app.post('/scan', function(req, res) {
+app.post("/scan", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         var form = new multiparty.Form();
         form.parse(req, function(err, fields, files) {
             // When both the inputs are supplied
             if (fields.scanUrl !== undefined && files.url_list !== undefined) {
                 var _url = fields.scanUrl.toString().trim();
-                var fileContentType = files.url_list[0]['headers']['content-type'];
-                var fileExtension = files.url_list[0]["originalFilename"].split('.').pop();
+                var fileContentType = files.url_list[0].headers["content-type"];
+                var fileExtension = files.url_list[0].originalFilename.split(".").pop();
                 var fileSize = files.url_list[0].size;
                 var filePath = files.url_list[0].path;
                 if (_url !== "" && fileSize > 0) {
                     return res.send("Please supply ethier a URL or a file");
-                }
-                // When URL is supplied as an input
-                else if (_url !== "" && fileSize === 0) {
+                } else if (_url !== "" && fileSize === 0) {
+                    // When URL is supplied as an input
                     if (validUrl.isHttpUri(_url) || validUrl.isHttpsUri(_url)) {
                         try {
                             var scanUrl = url.parse(_url, true);
@@ -198,25 +201,25 @@ app.post('/scan', function(req, res) {
                                     res.status(200).send("URL Scanned successfully");
                                 }
                             });
-                        } catch (err) {
+                        } catch (error) {
                             return res.status(200).send("Unable to parse the URL");
                         }
                     } else {
                         return res.status(200).send("Invalid URL Supplied");
                     }
-                }
-                // When File is supplied as an input
-                else if (fileSize > 0 && _url == "") {
+                } else if (fileSize > 0 && _url == "") {
+                    // When File is supplied as an input
                     var i;
                     if (fileContentType == "text/plain" && fileExtension == "txt" && fileSize <= 2097152) {
                         res.status(200).send("Scan is running in the background. Go take a coffee!<br>Scan history will be updated automatically.");
-                        var data = fs.readFileSync(filePath, 'utf8');
-                        var urlList = data.split('\n');
+                        var data = fs.readFileSync(filePath, "utf8");
+                        var urlList = data.split("\n");
                         var promises = [];
                         var urlListLength = urlList.length;
-                        for (i = 0; i < urlListLength; i++) {
+                        var urlStr;
+                        for (i = 0; i < urlListLength; i += 1) {
                             if (validUrl.isHttpUri(urlList[i]) || validUrl.isHttpsUri(urlList[i])) {
-                                var urlStr = url.parse(urlList[i], true);
+                                urlStr = url.parse(urlList[i], true);
                                 promises.push(startScan(urlStr, res));
                             }
                         }
@@ -240,32 +243,33 @@ app.post('/scan', function(req, res) {
             }
 
         });
-        form.on('close', function() {
+        form.on("close", function() {
             //console.log('Upload completed!');
         });
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
 function startSingleScan(scanUrl, res) {
-    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname + ' || :';
-    // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
+    var completeUrl = scanUrl.protocol + "//" + scanUrl.hostname + scanUrl.pathname;
+    console.log("Scan started on: " + completeUrl);
+    var cmd = "wpscan --format=json --ignore-main-redirect -o data/scan_results/" + filename + " --url=" + completeUrl + " || :";
+    // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
 
     return new Promise(function(resolve, reject) {
         child = exec(cmd, null, function(error, stderr, stdout) {
             var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
             if (resultObj.scan_aborted !== undefined) {
-                console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
+                console.log("Scan failed for: " + completeUrl);
                 try {
-                    fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
+                    fs.unlink(contextPath + "data/scan_results/" + filename, function(err) {
                         if (err) throw err;
                     });
-                } catch (err) {
+                } catch (_err) {
 
                 }
                 console.log("Reason: " + resultObj.scan_aborted);
@@ -273,7 +277,7 @@ function startSingleScan(scanUrl, res) {
                 resolve(false);
             } else {
                 var result_details = {
-                    "application_url": scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname,
+                    "application_url": completeUrl,
                     "timestamp": timestamp,
                     "filename": filename
                 };
@@ -291,10 +295,11 @@ function startSingleScan(scanUrl, res) {
 }
 
 function startScan(scanUrl, res) {
-    console.log("Scan started on: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
     var timestamp = new Date().getTime();
     var filename = scanUrl.hostname + "_" + timestamp + ".json";
-    var cmd = 'wpscan --format=json --ignore-main-redirect -o data/scan_results/' + filename + ' --url=' + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname + ' || :';
+    var completeUrl = scanUrl.protocol + "//" + scanUrl.hostname + scanUrl.pathname;
+    console.log("Scan started on: " + completeUrl);
+    var cmd = "wpscan --format=json --ignore-main-redirect -o data/scan_results/" + filename + " --url=" + completeUrl + " || :";
     // Using ` || : ` as a hack to return 0 exit code because otherwise wpscan returns non-zero exit code 
     // which makes node js to think command failed to run. ` echo $? ` is used to check exit code
     return new Promise(function(resolve, reject) {
@@ -302,9 +307,9 @@ function startScan(scanUrl, res) {
             try {
                 var resultObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + filename, "utf8"));
                 if (resultObj.scan_aborted !== undefined) {
-                    console.log("Scan failed for: " + scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname);
+                    console.log("Scan failed for: " + completeUrl);
                     try {
-                        fs.unlink(contextPath + "data/scan_results/" + filename, (err) => {
+                        fs.unlink(contextPath + "data/scan_results/" + filename, function(err) {
                             if (err) throw err;
                         });
                     } catch (err) {
@@ -313,7 +318,7 @@ function startScan(scanUrl, res) {
                     console.log("Reason: " + resultObj.scan_aborted);
                 } else {
                     var result_details = {
-                        "application_url": scanUrl.protocol + '//' + scanUrl.hostname + scanUrl.pathname,
+                        "application_url": completeUrl,
                         "timestamp": timestamp,
                         "filename": filename
                     };
@@ -343,7 +348,7 @@ app.get("/fetch/scheduled/history", function(req, res) {
         var data = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", "utf-8"));
         return res.status(200).send(data);
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
@@ -371,7 +376,7 @@ app.post("/schedule", function(req, res) {
                     var Url = url.parse(scanUrl, true);
                     valid = cron.validate(scheduleRule.trim());
                     if (valid) {
-                        let timestamp = new Date().getTime();
+                        var timestamp = new Date().getTime();
                         var task = schedule.scheduleJob({ start: timestamp, rule: scheduleRule }, function() {
                             startScan(Url, res).then(function(result) {
                                 if (result)
@@ -388,10 +393,10 @@ app.post("/schedule", function(req, res) {
                                 "dayOfWeek": dayOfWeek.trim()
                             },
                             "timestamp": timestamp,
-                            "application_url": Url.protocol + '//' + Url.hostname + Url.pathname,
+                            "application_url": Url.protocol + "//" + Url.hostname + Url.pathname,
                             "task": task
                         };
-                        var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+                        var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", "utf8"));
                         obj.scheduled_scans.unshift(schedule_details);
                         obj.total = ++currentCount;
                         fs.writeFileSync(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function() {
@@ -413,31 +418,35 @@ app.post("/schedule", function(req, res) {
             return res.status(400).send('{"message":"Request has been tampered.", "status": "failure"}');
         }
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
 function reinitializeScheduledScans() {
     console.log("Re-initializing Scheduled Scans...");
-    var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-    for (let i = 0; i < obj.scheduled_scans.length; i++) { // Don't change let to var
-        var timestamp = new Date(obj.scheduled_scans[i].timestamp);
-        var rule = obj.scheduled_scans[i].rule.second + " " + obj.scheduled_scans[i].rule.minute + " " + obj.scheduled_scans[i].rule.hour + " " + obj.scheduled_scans[i].rule.day + " " + obj.scheduled_scans[i].rule.dayOfMonth + " " + obj.scheduled_scans[i].rule.dayOfWeek;
-        var task = schedule.scheduleJob({ start: timestamp, rule: rule.trim() }, function(data) {
-            startScan(url.parse(obj.scheduled_scans[i].application_url, true)).then(function(result) {
-                if (result)
-                    console.log("Scheduled scan completed successfully");
+    try {
+        var obj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", "utf8"));
+        for (let i = 0; i < obj.scheduled_scans.length; i++) { // Don't change let keyword to var
+            var timestamp = new Date(obj.scheduled_scans[i].timestamp);
+            var rule = obj.scheduled_scans[i].rule.second + " " + obj.scheduled_scans[i].rule.minute + " " + obj.scheduled_scans[i].rule.hour + " " + obj.scheduled_scans[i].rule.day + " " + obj.scheduled_scans[i].rule.dayOfMonth + " " + obj.scheduled_scans[i].rule.dayOfWeek;
+            var task = schedule.scheduleJob({ start: timestamp, rule: rule.trim() }, function(data) {
+                startScan(url.parse(obj.scheduled_scans[i].application_url, true)).then(function(result) {
+                    if (result)
+                        console.log("Scheduled scan completed successfully");
+                });
             });
-        });
-        obj.scheduled_scans[i].task = task;
-    }
-    fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function(err) {
-        if (err) {
-            console.log("Failed to updated task details.");
-        } else {
-            console.log("Task details updated successfully.");
+            obj.scheduled_scans[i].task = task;
         }
-    });
+        fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(obj), function(err) {
+            if (err) {
+                console.log("Failed to updated task details.");
+            } else {
+                console.log("Task details updated successfully.");
+            }
+        });
+    } catch (err) {
+        console.log("Error reading scheduled_scans.json file or file doesn't exist.");
+    }
 }
 
 reinitializeScheduledScans();
@@ -448,13 +457,13 @@ app.get("/report", function(req, res) {
             var application_url = req.query.application_url;
             var timestamp = req.query.timestamp;
             if (application_url !== undefined && timestamp !== undefined) {
-                var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
+                var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
                 var i;
                 var objLen = obj.scan_history.length;
                 var scanHistory = obj.scan_history;
                 for (i = 0; i < objLen; i++) {
                     if (scanHistory[i].application_url == application_url && scanHistory[i].timestamp == timestamp) {
-                        var objResult = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + scanHistory[i].filename, 'utf8'));
+                        var objResult = JSON.parse(fs.readFileSync(contextPath + "data/scan_results/" + scanHistory[i].filename, "utf8"));
                         res.send(objResult);
                         res.end();
                         return;
@@ -467,20 +476,20 @@ app.get("/report", function(req, res) {
                 return res.status(400).send("Request has been tampered");
             }
         } catch (err) {
-            res.redirect('/');
+            res.redirect("/");
         }
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
 app.get("/fetch/scan/history", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
-        var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
+        var obj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
         res.send(obj);
         res.end();
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 });
 
@@ -490,7 +499,7 @@ app.post("/delete/report", function(req, res) {
             var application_url = req.body.application_url;
             var timestamp = req.body.timestamp;
             if (application_url !== undefined && timestamp !== undefined) {
-                var historyObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", 'utf8'));
+                var historyObj = JSON.parse(fs.readFileSync(contextPath + "data/scan_history.json", "utf8"));
                 var scanHistoryList = historyObj.scan_history;
                 var historyLength = scanHistoryList.length;
                 var i;
@@ -498,7 +507,7 @@ app.post("/delete/report", function(req, res) {
                     if (scanHistoryList[i].application_url === application_url && scanHistoryList[i].timestamp === parseInt(timestamp)) {
                         // Report deletion logic
                         var j = i;
-                        fs.unlink(contextPath + "data/scan_results/" + scanHistoryList[i].filename, (err) => {
+                        fs.unlink(contextPath + "data/scan_results/" + scanHistoryList[i].filename, function(err) {
                             if (err) {
                                 console.log("Failed to delete the report.");
                                 return res.status(400).send("Failed to delete the report.");
@@ -532,7 +541,7 @@ app.post("/delete/schedule", function(req, res) {
             var application_url = req.body.application_url;
             var timestamp = req.body.timestamp;
             if (application_url !== undefined && timestamp !== undefined) {
-                var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+                var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", "utf8"));
                 var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
                 var scheduledHistoryLength = scheduleHistoryList.length;
                 var i;
@@ -560,69 +569,64 @@ app.post("/delete/schedule", function(req, res) {
     }
 });
 
-
 app.post("/edit/schedule", function(req, res) {
     if (req.session.user && req.cookies.user_sid) {
-        try {
-            var application_url = req.body.application_url;
-            var timestamp = req.body.timestamp;
-            if (application_url !== undefined && timestamp !== undefined) {
-                var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
-                var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
-                var scheduledHistoryLength = scheduleHistoryList.length;
-                var i;
-                for (i = 0; i < scheduledHistoryLength; i++) {
-                    if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
-                        // Schedule edit logic
-                        scheduledTask = scheduleHistoryList[i];
-                        scheduledTask.rule = req.body.rule;
-                        scheduledTask.timestamp = new Date().getTime();
-                        var rule = scheduledTask.rule.second + " " + scheduledTask.rule.minute + " " + scheduledTask.rule.hour + " " + scheduledTask.rule.day + " " + scheduledTask.rule.dayOfMonth + " " + scheduledTask.rule.dayOfWeek;
-                        var valid = cron.validate(rule);
-                        if (valid) {
-                            try {
-                                fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
-                                    if (err) {
-                                        console.log("Failed to edit schedule. Reason: " + err);
-                                        return res.status(400).send("Failed to edit schedule.");
-                                    } else {
-                                        var resche = schedule.scheduledJobs[scheduledTask.task.name].reschedule({ start: scheduledTask.timestamp, rule: rule });
-                                        console.log("Schedule edited successfully.");
-                                        return res.status(200).send(true);
-                                    }
-                                });
-                            } catch (err) {
-                                console.log("Failed to open/edit scheduled_scans.json file.");
-                                return res.status(400).send("Failed to update scheduled scans.");
-                            }
-                        } else {
-                            return res.status(400).send("Please enter a valid cron expression.");
+        var application_url = req.body.application_url;
+        var timestamp = req.body.timestamp;
+        if (application_url !== undefined && timestamp !== undefined) {
+            var scheduleHistoryObj = JSON.parse(fs.readFileSync(contextPath + "data/scheduled_scans.json", 'utf8'));
+            var scheduleHistoryList = scheduleHistoryObj.scheduled_scans;
+            var scheduledHistoryLength = scheduleHistoryList.length;
+            var i;
+            for (i = 0; i < scheduledHistoryLength; i++) {
+                if (scheduleHistoryList[i].application_url === application_url && scheduleHistoryList[i].timestamp === parseInt(timestamp)) {
+                    // Schedule edit logic
+                    var scheduledTask = scheduleHistoryList[i];
+                    scheduledTask.rule = req.body.rule;
+                    scheduledTask.timestamp = new Date().getTime();
+                    var rule = scheduledTask.rule.second + " " + scheduledTask.rule.minute + " " + scheduledTask.rule.hour + " " + scheduledTask.rule.day + " " + scheduledTask.rule.dayOfMonth + " " + scheduledTask.rule.dayOfWeek;
+                    var valid = cron.validate(rule);
+                    if (valid) {
+                        try {
+                            fs.writeFile(contextPath + "data/scheduled_scans.json", JSON.stringify(scheduleHistoryObj), function(err) {
+                                if (err) {
+                                    console.log("Failed to edit schedule. Reason: " + err);
+                                    return res.status(400).send("Failed to edit schedule.");
+                                } else {
+                                    var resche = schedule.scheduledJobs[scheduledTask.task.name].reschedule({ start: scheduledTask.timestamp, rule: rule });
+                                    console.log("Schedule edited successfully.");
+                                    return res.status(200).send(true);
+                                }
+                            });
+                        } catch (err) {
+                            console.log("Failed to open/edit scheduled_scans.json file.");
+                            return res.status(400).send("Failed to update scheduled scans.");
                         }
+                    } else {
+                        return res.status(400).send("Please enter a valid cron expression.");
                     }
                 }
-            } else {
-                return res.status(400).send("Request has been tampered.");
             }
-        } catch (err) {
-
+        } else {
+            return res.status(400).send("Request has been tampered.");
         }
     }
 });
 
-app.post('*', pageNotFound)
+app.post("*", pageNotFound);
 
-app.get('*', pageNotFound);
+app.get("*", pageNotFound);
 
 function pageNotFound(req, res) {
     if (req.session.user && req.cookies.user_sid) {
         fs.readFile("static/templates/404.html", function(err, data) {
             res.writeHead(404, {
-                'Content-Type': 'text/html'
+                "Content-Type": "text/html"
             });
             res.write(data);
             return res.end();
         });
     } else {
-        res.redirect('/login');
+        res.redirect("/login");
     }
 }
