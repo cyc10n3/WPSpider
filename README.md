@@ -1,4 +1,4 @@
-# WPScan Web Interface (beta version)
+# WPScan Web Interface (version 1.0b)
 A centralized dashboard for running and scheduling WordPress scans powered by wpscan utility. It has following features:
 1. Login Page-
     * Authentication is required to access the application.
