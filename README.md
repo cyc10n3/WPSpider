@@ -23,14 +23,14 @@ A centralized dashboard for running and scheduling WordPress scans powered by wp
 ```
 * Download and Install Node.js- https://nodejs.org/en/download/
 * Install wpscan- https://wpscan.org/
-* git clone https://github.com/cyc10n3/WPScan_Web_Interface.git
-* cd  WPScan_Web_Interface
+* git clone https://github.com/cyc10n3/WPSpider.git
+* cd  WPSpider
 * npm install (for installing node modules or dependencies)
 * npm start
 * Open https://localhost:1337 or https://127.0.0.1:1337 in browser
 * Login with default credentials (admin/cyc10n3)
 ```
-![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `It is recommended to change the login password by modifying config.json`[`file`](https://github.com/cyc10n3/WPScan_Web_Interface/blob/master/config.json).
+![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `It is recommended to change the login password by modifying config.json`[`file`](https://github.com/cyc10n3/WPSpider/blob/master/config.json).
 
 ## Screenshots
 
